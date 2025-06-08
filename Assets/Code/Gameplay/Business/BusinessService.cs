@@ -59,11 +59,8 @@ namespace Code.Gameplay.Business
                 business.Income.Value = GetTotalIncome(id);
                 UpdateLevelUpPrice(business);
 
-                int updateRequest = _ecsWorld.NewEntity();
+                CreateUpdateRequest(id, business);
 
-                 _updateRequestPool.Add(updateRequest)
-                     .Value = new UpdateBusinessRequest(business.Level.Value, business.LevelUpPrice.Value, business.Income.Value,id);
-                
                 return true;
             }
 
@@ -84,6 +81,7 @@ namespace Code.Gameplay.Business
 
             business.Upgrades[upgradeId].Purchased = true;
             business.Income.Value = GetTotalIncome(id);
+            CreateUpdateRequest(id,business);
             return true;
         }
 
@@ -150,6 +148,14 @@ namespace Code.Gameplay.Business
         private static void UpdateLevelUpPrice(Business business)
         {
             business.LevelUpPrice.Value = BusinessCalculator.CalculateLevelUpPrice(business.Level.Value, business.BaseIncome.Value);
+        }
+
+        private void CreateUpdateRequest(int id, Business business)
+        {
+            int updateRequest = _ecsWorld.NewEntity();
+
+            _updateRequestPool.Add(updateRequest)
+                .Value = new UpdateBusinessRequest(business.Level.Value, business.LevelUpPrice.Value, business.Income.Value,id);
         }
     }
 }
