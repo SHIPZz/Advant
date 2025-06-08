@@ -44,8 +44,7 @@ namespace Code
 
             _moneyView.Initialize(new CurrencyScreenModel(currencyModel));
 
-            CreateBusinessViews(businessConfig.GetBusinessDatas(), staticData, businessService,
-                businessUpgradeNamesConfig);
+            CreateBusinessViews(businessConfig.GetBusinessDatas(), staticData, businessService, businessUpgradeNamesConfig);
 
             InitSystems(businessService, moneyService, businessUpgradeNamesConfig, businessConfig);
         }
