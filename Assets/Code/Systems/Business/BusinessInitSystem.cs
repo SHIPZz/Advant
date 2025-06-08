@@ -97,30 +97,31 @@ namespace Code.Systems.Business
                 ref var progress = ref progressPool.Add(entity);
                 progress.Value = 0f;
 
-                ref var levelUpPrice = ref levelUpPricePool.Add(entity);
-
                 ref var baseCost = ref baseCostPool.Add(entity).Value;
                 baseCost = businessData.BaseCost;
 
-                if (level.Value > 0)
-                {
-                    levelUpPrice.Value = (level.Value + 1) * baseCost;
-
-                    ref var incomeСooldownAvailable = ref incomeCooldownAvailablePool.Add(entity);
-                    incomeСooldownAvailable.Value = true;
-                }
-
-                if (i == 0)
-                {
-                    ref var purchased = ref purchasedPool.Add(entity);
-                    purchased.Value = true;
-                }
+                ref var levelUpPrice = ref levelUpPricePool.Add(entity);
+                levelUpPrice.Value = (level.Value + 1) * baseCost;
+                
+                SetupFirstBusiness(level, incomeCooldownAvailablePool, entity, purchasedPool);
 
                 ref var modifiers = ref updateModifiers.Add(entity);
                 modifiers.Value = new List<UpgradeData>(businessData.Upgrades.ToList());
 
                 _businessService.NotifyBusinessDataUpdated(businessId.Value, level.Value, income.Value,
                     levelUpPricePool.Get(entity).Value, name.Value);
+            }
+        }
+
+        private static void SetupFirstBusiness(LevelComponent level, EcsPool<IncomeСooldownAvailableComponent> incomeCooldownAvailablePool, int entity,
+            EcsPool<PurchasedComponent> purchasedPool)
+        {
+            if (level.Value > 0)
+            {
+                ref var incomeСooldownAvailable = ref incomeCooldownAvailablePool.Add(entity);
+                incomeСooldownAvailable.Value = true;
+                ref var purchased = ref purchasedPool.Add(entity);
+                purchased.Value = true;
             }
         }
     }

@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using Code.Components;
 using Code.Configs;
-using Code.Gameplay.Business;
 using Code.Requests;
 using Code.Utils;
 using Leopotam.EcsLite;
@@ -75,8 +74,6 @@ namespace Code.Systems.Business
                 
                 _moneyUpdateRequestPool.Add(updateRequest)
                     .Value = new MoneyUpdateRequest(ownerId,totalIncome);
-                
-                Debug.Log($"@@@: income {totalIncome}");
             }
         }
     }

@@ -87,7 +87,7 @@ namespace Code.Gameplay.Business
                 GetOrCreateProperty(_nameProperties, id).Value = name;
         }
 
-        public bool TryPurchaseUpgrade(int id, int upgradeId, int price)
+        public bool TryPurchaseUpgrade(int businessId, int upgradeId, int price)
         {
             if (!_moneyService.TryPurchase(price))
                 return false;
@@ -95,7 +95,7 @@ namespace Code.Gameplay.Business
             int updateRequest = _ecsWorld.NewEntity();
 
             _updateRequestPool.Add(updateRequest).Value =
-                new UpdateBusinessRequest(-1, -1, -1, id, new UpdateModifierData(upgradeId));
+                new UpdateBusinessRequest(-1, -1, -1, businessId, new UpdateModifierData(upgradeId));
 
             return true;
         }

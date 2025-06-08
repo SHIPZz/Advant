@@ -25,7 +25,7 @@ namespace Code.Systems.Hero
 
             world.GetPool<MoneyComponent>()
                 .Add(hero)
-                .Value = 10000;
+                .Value = 100000;
 
             world.GetPool<IdComponent>()
                 .Add(hero)
