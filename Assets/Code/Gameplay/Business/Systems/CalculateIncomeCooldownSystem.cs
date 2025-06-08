@@ -1,4 +1,5 @@
 ﻿using Code.Common.Components;
+using Code.Common.Services;
 using Code.Gameplay.Business.Components;
 using Leopotam.EcsLite;
 using UnityEngine;
@@ -7,11 +8,18 @@ namespace Code.Gameplay.Business.Systems
 {
     public class CalculateIncomeCooldownSystem : IEcsRunSystem, IEcsInitSystem
     {
+        private readonly ITimeService _timeService;
+        
         private EcsFilter _incomeCooldowns;
         private EcsWorld _world;
         private EcsPool<IncomeСooldownLeftComponent> _cooldownLeftPool;
         private EcsPool<IncomeСooldownUpComponent> _cooldownUpPool;
         private EcsPool<IncomeСooldownComponent> _incomeCooldownPool;
+        
+        public CalculateIncomeCooldownSystem(ITimeService timeService)
+        {
+            _timeService = timeService;
+        }
 
         public void Init(IEcsSystems systems)
         {
@@ -37,7 +45,7 @@ namespace Code.Gameplay.Business.Systems
                ref var currentCooldown = ref _cooldownLeftPool.Get(incomeCooldown).Value;
                ref var cooldownUp = ref _cooldownUpPool.Get(incomeCooldown).Value;
 
-                currentCooldown -= Time.deltaTime; 
+                currentCooldown -= _timeService.DeltaTime; 
 
                 if (currentCooldown <= 0)
                 {

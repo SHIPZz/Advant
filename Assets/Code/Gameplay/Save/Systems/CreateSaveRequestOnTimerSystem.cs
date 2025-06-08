@@ -1,3 +1,4 @@
+using Code.Common.Services;
 using Code.Gameplay.Save.Components;
 using Leopotam.EcsLite;
 using UnityEngine;
@@ -8,8 +9,15 @@ namespace Code.Gameplay.Save.Systems
     {
         private const float SaveInterval = 5f;
         
+        private readonly ITimeService _timeService;
+        
         private EcsWorld _world;
         private float _timeSinceLastSave;
+        
+        public CreateSaveRequestOnTimerSystem(ITimeService timeService)
+        {
+            _timeService = timeService;
+        }
 
         public void Init(IEcsSystems systems)
         {
@@ -19,7 +27,7 @@ namespace Code.Gameplay.Save.Systems
 
         public void Run(IEcsSystems systems)
         {
-            _timeSinceLastSave += Time.deltaTime;
+            _timeSinceLastSave += _timeService.DeltaTime;
             
             if (_timeSinceLastSave >= SaveInterval)
             {

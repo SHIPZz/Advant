@@ -24,15 +24,17 @@ namespace Code
         private IEcsSystems _systems;
         private IIdentifierService _identifierService;
         private ISaveService _saveService;
+        private ITimeService _timeService;
 
         private void Start()
         {
             Application.targetFrameRate = 120;
-            
+
             _world = new EcsWorld();
             _systems = new EcsSystems(_world);
             _identifierService = new IdentifierService();
             _saveService = new PlayerPrefsSaveService();
+            _timeService = new UnityTimeService();
 
             StaticDataService staticData = LoadStaticData();
             BusinessUpgradeNamesConfig businessUpgradeNamesConfig = staticData.GetBusinessUpgradeNamesConfig();
@@ -48,7 +50,8 @@ namespace Code
 
             _moneyView.Initialize(new CurrencyScreenModel(currencyModel));
 
-            CreateBusinessViews(businessConfig.GetBusinessDatas(), staticData, businessService, businessUpgradeNamesConfig);
+            CreateBusinessViews(businessConfig.GetBusinessDatas(), staticData, businessService,
+                businessUpgradeNamesConfig);
 
             InitFeatures(businessService, moneyService, businessUpgradeNamesConfig, businessConfig);
         }
@@ -69,10 +72,16 @@ namespace Code
         private void InitFeatures(BusinessService businessService, IMoneyService heroMoneyService,
             BusinessUpgradeNamesConfig businessUpgradeNamesConfig, BusinessConfig businessConfig)
         {
-            var heroFeature = new HeroFeature(_world, _systems, _identifierService,_saveService);
-            var businessFeature = new BusinessFeature(_world, _systems, businessService, _identifierService, businessUpgradeNamesConfig, businessConfig,_saveService);
+            var heroFeature = new HeroFeature(_world, _systems, _identifierService, _saveService);
+            var businessFeature = new BusinessFeature(_world,
+                    _systems,
+                    businessService,
+                    _identifierService,
+                    businessUpgradeNamesConfig,
+                    businessConfig, _saveService, _timeService);
+            
             var moneyFeature = new MoneyFeature(_world, _systems, heroMoneyService);
-            var saveFeature = new SaveFeature(_world, _systems, _saveService);
+            var saveFeature = new SaveFeature(_world, _systems, _saveService, _timeService);
 
             heroFeature.RegisterSystems();
             businessFeature.RegisterSystems();

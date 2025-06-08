@@ -15,6 +15,7 @@ namespace Code.Gameplay.Business.Features
         private readonly BusinessUpgradeNamesConfig _businessUpgradeNamesConfig;
         private readonly BusinessConfig _businessConfig;
         private readonly ISaveService _saveService;
+        private readonly ITimeService _timeService;
 
         public BusinessFeature(
             EcsWorld world, 
@@ -23,7 +24,7 @@ namespace Code.Gameplay.Business.Features
             IIdentifierService identifierService,
             BusinessUpgradeNamesConfig businessUpgradeNamesConfig,
             BusinessConfig businessConfig, 
-            ISaveService saveService) 
+            ISaveService saveService, ITimeService timeService) 
             : base(world, systems)
         {
             _businessService = businessService;
@@ -31,13 +32,14 @@ namespace Code.Gameplay.Business.Features
             _businessUpgradeNamesConfig = businessUpgradeNamesConfig;
             _businessConfig = businessConfig;
             _saveService = saveService;
+            _timeService = timeService;
         }
 
         public override void RegisterSystems()
         {
             Systems
                 .Add(new BusinessInitSystem(_businessUpgradeNamesConfig, _identifierService, _businessConfig, _businessService, _saveService))
-                .Add(new CalculateIncomeCooldownSystem())
+                .Add(new CalculateIncomeCooldownSystem(_timeService))
                 .Add(new CalculateBusinessProgressSystem(_businessService))
                 .Add(new UpdateBusinessOnRequestSystem(_businessService))
                 .Add(new CreateSaveRequestOnBusinessUpdateSystem())
