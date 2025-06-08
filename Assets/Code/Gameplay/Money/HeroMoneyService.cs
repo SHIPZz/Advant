@@ -1,5 +1,7 @@
-﻿using Code.Components;
-using Code.Requests;
+﻿using Code.Common.Components;
+using Code.Gameplay.Hero.Components;
+using Code.Gameplay.Money.Components;
+using Code.Gameplay.Requests;
 using Leopotam.EcsLite;
 
 namespace Code.Gameplay.Money

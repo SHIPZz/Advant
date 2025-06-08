@@ -1,5 +1,5 @@
-using Code.Configs;
 using Code.Constants;
+using Code.Gameplay.Business.Configs;
 using Code.UI.Business;
 using UnityEngine;
 

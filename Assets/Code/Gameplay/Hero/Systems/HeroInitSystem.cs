@@ -1,0 +1,37 @@
+﻿using Code.Common.Components;
+using Code.Common.Services;
+using Code.Gameplay.Hero.Components;
+using Code.Gameplay.Money.Components;
+using Leopotam.EcsLite;
+
+namespace Code.Gameplay.Hero.Systems
+{
+    public class HeroInitSystem : IEcsInitSystem
+    {
+        private readonly IIdentifierService _identifierService;
+        
+        public HeroInitSystem(IIdentifierService identifierService)
+        {
+            _identifierService = identifierService;
+        }
+
+        public void Init(IEcsSystems systems)
+        {
+           var world = systems.GetWorld();
+            
+            int hero = world.NewEntity();
+
+            world.GetPool<HeroComponent>()
+                .Add(hero)
+                .Value = true;
+
+            world.GetPool<MoneyComponent>()
+                .Add(hero)
+                .Value = 100000;
+
+            world.GetPool<IdComponent>()
+                .Add(hero)
+                .Value = _identifierService.Next();
+        }
+    }
+}

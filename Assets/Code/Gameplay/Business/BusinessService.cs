@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using Code.Common;
-using Code.Components;
-using Code.Configs;
+using Code.Gameplay.Business.Components;
+using Code.Gameplay.Business.Configs;
 using Code.Gameplay.Money;
-using Code.Requests;
+using Code.Gameplay.Requests;
 using Code.Utils;
 using Leopotam.EcsLite;
 using UniRx;

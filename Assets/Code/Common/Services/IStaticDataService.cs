@@ -1,4 +1,4 @@
-using Code.Configs;
+using Code.Gameplay.Business.Configs;
 using Code.UI.Business;
 
 namespace Code.Common.Services

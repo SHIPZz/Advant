@@ -1,11 +1,11 @@
 using System.Collections.Generic;
 using Code.Common.Services;
-using Code.Configs;
 using Code.Gameplay.Business;
+using Code.Gameplay.Business.Configs;
+using Code.Gameplay.Business.Systems;
+using Code.Gameplay.Hero.Systems;
 using Code.Gameplay.Money;
-using Code.Systems.Business;
-using Code.Systems.Hero;
-using Code.Systems.Money;
+using Code.Gameplay.Money.Systems;
 using Code.UI.Business;
 using Code.UI.Money;
 using Leopotam.EcsLite;
