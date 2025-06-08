@@ -37,7 +37,7 @@ namespace Code.Gameplay.Business.Systems
                ref var currentCooldown = ref _cooldownLeftPool.Get(incomeCooldown).Value;
                ref var cooldownUp = ref _cooldownUpPool.Get(incomeCooldown).Value;
 
-                currentCooldown -= Time.deltaTime; //todo: make timeservice
+                currentCooldown -= Time.deltaTime; 
 
                 if (currentCooldown <= 0)
                 {

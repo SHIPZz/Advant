@@ -124,8 +124,6 @@ namespace Code.Gameplay.Business.Systems
             var levelUpPrice = _levelUpPricePool.Get(business).Value;
             var name = _namePool.Get(business).Value;
 
-            Debug.Log($"{_purchasedPool.Get(businessId).Value} - purchased");
-
             _businessService.NotifyBusinessDataUpdated(businessId, level, income, levelUpPrice, name);
         }
 

@@ -40,6 +40,7 @@ namespace Code.Gameplay.Business.Features
                 .Add(new CalculateIncomeCooldownSystem())
                 .Add(new CalculateBusinessProgressSystem(_businessService))
                 .Add(new UpdateBusinessOnRequestSystem(_businessService))
+                .Add(new CreateSaveRequestOnBusinessUpdateSystem())
                 .Add(new CleanupBusinessRequestsSystem());
         }
     }

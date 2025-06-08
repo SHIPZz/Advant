@@ -23,7 +23,7 @@ namespace Code.Gameplay.Save.Systems
             
             if (_timeSinceLastSave >= SaveInterval)
             {
-                SendSaveRequest();
+                 SendSaveRequest();
                 _timeSinceLastSave = 0f;
             }
         }

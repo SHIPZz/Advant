@@ -7,29 +7,26 @@ namespace Code.Gameplay.Save.Systems
     public class CreateSaveRequestOnFocusChangedSystem : IEcsInitSystem, IEcsRunSystem
     {
         private EcsWorld _world;
-        private bool _wasFocused = true;
+        private EcsPool<SaveRequestComponent> _saveRequestPool;
 
         public void Init(IEcsSystems systems)
         {
             _world = systems.GetWorld();
+            _saveRequestPool = _world.GetPool<SaveRequestComponent>();
         }
 
         public void Run(IEcsSystems systems)
         {
-            bool isFocused = Application.isFocused;
-            
-            if (_wasFocused && !isFocused)
+            if (!Application.isFocused)
             {
                 SendSaveRequest();
             }
-            
-            _wasFocused = isFocused;
         }
 
         private void SendSaveRequest()
         {
             int entity = _world.NewEntity();
-            _world.GetPool<SaveRequestComponent>().Add(entity);
+            _saveRequestPool.Add(entity);
         }
     }
 } 
