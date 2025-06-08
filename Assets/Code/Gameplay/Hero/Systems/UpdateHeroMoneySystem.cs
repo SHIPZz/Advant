@@ -12,7 +12,8 @@ namespace Code.Gameplay.Hero.Systems
 
         private EcsWorld _world;
         private EcsFilter _hero;
-        private EcsPool<MoneyComponent> _balancePool;
+        private EcsPool<MoneyComponent> _moneyPool;
+        private EcsPool<IdComponent> _idPool;
 
         public UpdateHeroMoneySystem(IMoneyService heroMoneyService)
         {
@@ -28,15 +29,19 @@ namespace Code.Gameplay.Hero.Systems
                 .Inc<HeroComponent>()
                 .End();
 
-            _balancePool = _world.GetPool<MoneyComponent>();
+            _idPool = _world.GetPool<IdComponent>();
+
+            _moneyPool = _world.GetPool<MoneyComponent>();
         }
 
         public void PostRun(IEcsSystems systems)
         {
             foreach (int hero in _hero)
             {
-                int targetBalance = _balancePool.Get(hero).Value;
-                 
+                int targetBalance = _moneyPool.Get(hero).Value;
+                int heroId = _idPool.Get(hero).Value;
+
+                _heroMoneyService.SetOwnerId(heroId);
                 _heroMoneyService.Set(targetBalance);
             }
         }

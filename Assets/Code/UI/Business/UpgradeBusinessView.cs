@@ -27,6 +27,10 @@ namespace Code.UI.Business
                 .Subscribe(isAvailable => _upgradeButton.interactable = isAvailable)
                 .AddTo(this);
 
+            model.UpgradeState
+                .Subscribe(SetupAfterPurchasing)
+                .AddTo(this);
+
             if (_priceText.gameObject.activeSelf)
                 _priceText.text = $"Цена: {model.Price}$";
 

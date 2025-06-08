@@ -6,5 +6,6 @@ namespace Code.Gameplay.Money
     {
         void Set(int money);
         bool TryPurchase(int cost);
+        void SetOwnerId(int id);
     }
 }

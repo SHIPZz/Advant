@@ -6,7 +6,7 @@ using Code.Gameplay.Business.Components;
 using Code.Gameplay.Business.Configs;
 using Leopotam.EcsLite;
 
-namespace Code.Gameplay.Business.Systems
+namespace Code.Gameplay.Business.Factory
 {
     public class BusinessFactory
     {

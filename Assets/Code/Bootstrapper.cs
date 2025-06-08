@@ -6,6 +6,7 @@ using Code.Gameplay.Business.Features;
 using Code.Gameplay.Hero.Features;
 using Code.Gameplay.Money;
 using Code.Gameplay.Money.Features;
+using Code.Gameplay.Save;
 using Code.UI.Business;
 using Code.UI.Money;
 using Leopotam.EcsLite;
@@ -22,12 +23,14 @@ namespace Code
         private EcsWorld _world;
         private IEcsSystems _systems;
         private IIdentifierService _identifierService;
+        private ISaveService _saveService;
 
         private void Start()
         {
             _world = new EcsWorld();
             _systems = new EcsSystems(_world);
             _identifierService = new IdentifierService();
+            _saveService = new PlayerPrefsSaveService();
 
             StaticDataService staticData = LoadStaticData();
             BusinessUpgradeNamesConfig businessUpgradeNamesConfig = staticData.GetBusinessUpgradeNamesConfig();
@@ -64,13 +67,15 @@ namespace Code
         private void InitFeatures(BusinessService businessService, IMoneyService heroMoneyService,
             BusinessUpgradeNamesConfig businessUpgradeNamesConfig, BusinessConfig businessConfig)
         {
-            var heroFeature = new HeroFeature(_world, _systems, _identifierService);
-            var businessFeature = new BusinessFeature(_world, _systems, businessService, heroMoneyService, _identifierService, businessUpgradeNamesConfig, businessConfig);
+            var heroFeature = new HeroFeature(_world, _systems, _identifierService,_saveService);
+            var businessFeature = new BusinessFeature(_world, _systems, businessService, _identifierService, businessUpgradeNamesConfig, businessConfig,_saveService);
             var moneyFeature = new MoneyFeature(_world, _systems, heroMoneyService);
+            var saveFeature = new SaveFeature(_world, _systems, _saveService);
 
             heroFeature.RegisterSystems();
             businessFeature.RegisterSystems();
             moneyFeature.RegisterSystems();
+            saveFeature.RegisterSystems();
 
             _systems.Init();
         }

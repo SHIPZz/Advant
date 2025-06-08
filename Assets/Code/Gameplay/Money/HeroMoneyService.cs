@@ -1,6 +1,4 @@
-﻿using Code.Common.Components;
-using Code.Gameplay.Hero.Components;
-using Code.Gameplay.Money.Components;
+﻿using Code.Gameplay.Money.Components;
 using Code.Gameplay.Requests;
 using Leopotam.EcsLite;
 
@@ -11,9 +9,7 @@ namespace Code.Gameplay.Money
         private readonly CurrencyModel _currencyModel;
         private readonly EcsWorld _ecsWorld;
         private EcsPool<MoneyUpdateRequestComponent> _moneyUpdateRequestPool;
-        private EcsFilter _heroFilter;
-        private EcsPool<IdComponent> _idPool;
-        private EcsPool<MoneyComponent> _moneyPool;
+        private int _ownerId;
 
         public HeroMoneyService(CurrencyModel currencyModel, EcsWorld ecsWorld)
         {
@@ -21,36 +17,18 @@ namespace Code.Gameplay.Money
             _currencyModel = currencyModel;
         }
 
-        public void Initialize()
-        {
-            _heroFilter = _ecsWorld
-                .Filter<HeroComponent>()
-                .Inc<IdComponent>()
-                .Inc<MoneyComponent>()
-                .End();
+        public void Initialize() => _moneyUpdateRequestPool = _ecsWorld.GetPool<MoneyUpdateRequestComponent>();
 
-            _moneyUpdateRequestPool = _ecsWorld.GetPool<MoneyUpdateRequestComponent>();
-            _moneyPool = _ecsWorld.GetPool<MoneyComponent>();
-            _idPool = _ecsWorld.GetPool<IdComponent>();
-        }
+        public void SetOwnerId(int id) => _ownerId = id;
 
-        public void Set(int money)
-        {
-            _currencyModel.Money.Value = money;
-        }
+        public void Set(int money) => _currencyModel.Money.Value = money;
 
         public bool TryPurchase(int cost)
         {
-            foreach (int hero in _heroFilter)
-            {
-                int heroId = _idPool.Get(hero).Value;
-                int money = _moneyPool.Get(hero).Value;
+            if (_currencyModel.Money.Value < cost)
+                return false;
 
-                if (money < cost)
-                    return false;
-
-                CreateUpdateMoneyRequest(-cost, heroId);
-            }
+            CreateUpdateMoneyRequest(-cost, _ownerId);
 
             return true;
         }
@@ -58,7 +36,6 @@ namespace Code.Gameplay.Money
         private void CreateUpdateMoneyRequest(int cost, int heroId)
         {
             var request = _ecsWorld.NewEntity();
-
             _moneyUpdateRequestPool
                 .Add(request)
                 .Value = new MoneyUpdateRequest(heroId, cost);

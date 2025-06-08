@@ -22,6 +22,7 @@ namespace Code.Gameplay.Money.Systems
             _world = systems.GetWorld();
 
             _money = _world.Filter<MoneyComponent>()
+                .Inc<IdComponent>()
                 .End();
 
             _idPool = _world.GetPool<IdComponent>();
