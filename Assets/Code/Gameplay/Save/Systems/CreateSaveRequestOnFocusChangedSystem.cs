@@ -7,30 +7,23 @@ namespace Code.Gameplay.Save.Systems
     public class CreateSaveRequestOnFocusChangedSystem : IEcsInitSystem, IEcsRunSystem
     {
         private EcsWorld _world;
-        private bool _isPaused;
+        private bool _wasFocused = true;
 
         public void Init(IEcsSystems systems)
         {
             _world = systems.GetWorld();
-            _isPaused = false;
         }
 
         public void Run(IEcsSystems systems)
         {
-            if (Application.isFocused && _isPaused)
+            bool isFocused = Application.isFocused;
+            
+            if (_wasFocused && !isFocused)
             {
                 SendSaveRequest();
-                _isPaused = false;
             }
-        }
-
-        private void OnApplicationPause(bool pauseStatus)
-        {
-            if (pauseStatus)
-            {
-                SendSaveRequest();
-                _isPaused = true;
-            }
+            
+            _wasFocused = isFocused;
         }
 
         private void SendSaveRequest()
