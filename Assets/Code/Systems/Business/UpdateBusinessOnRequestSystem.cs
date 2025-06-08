@@ -41,7 +41,122 @@ namespace Code.Systems.Business
         public void Init(IEcsSystems systems)
         {
             _world = systems.GetWorld();
+            InitializeFilters();
+            InitializePools();
+        }
 
+        public void Run(IEcsSystems systems)
+        {
+            foreach (int updateRequest in _updateRequest)
+            {
+                ProcessUpdateRequest(updateRequest);
+            }
+        }
+
+        private void ProcessUpdateRequest(int updateRequest)
+        {
+            var request = _businessUpdateRequestPool.Get(updateRequest).Value;
+            
+            foreach (int business in _businesses)
+            {
+                if (!IsMatchingBusiness(business, request))
+                    continue;
+
+                UpdateBusinessData(business, request);
+            }
+        }
+
+        private bool IsMatchingBusiness(int business, UpdateBusinessRequest request)
+        {
+            int businessId = _businessIdPool.Get(business).Value;
+            return request.Id == businessId;
+        }
+
+        private void UpdateBusinessData(int business, UpdateBusinessRequest request)
+        {
+            ProcessUpgradeModifier(business, request);
+            UpdateBusinessLevelAndIncome(business, request);
+            UpdateBusinessState(business);
+            NotifyBusinessUpdate(business);
+        }
+
+        private void ProcessUpgradeModifier(int business, UpdateBusinessRequest request)
+        {
+            if (request.UpdateModifierData.Id <= -1)
+                return;
+
+            ref var upgradeDatas = ref _updateBusinessModifiersPool.Get(business).Value;
+            var upgradeData = upgradeDatas[request.UpdateModifierData.Id];
+            
+            if (!upgradeData.Purchased) 
+                upgradeData.Purchased = true;
+        }
+
+        private void UpdateBusinessLevelAndIncome(int business, UpdateBusinessRequest request)
+        {
+            ref var level = ref _levelPool.Get(business).Value;
+            ref var income = ref _incomePool.Get(business).Value;
+            ref var levelUpPrice = ref _levelUpPricePool.Get(business).Value;
+
+            var baseIncome = _baseIncomePool.Get(business).Value;
+            var baseCost = _baseCostPool.Get(business).Value;
+            var upgradeDatas = _updateBusinessModifiersPool.Get(business).Value;
+
+            if (request.Level > -1) 
+                level += request.Level;
+
+            income = CalculateNewIncome(upgradeDatas, level, baseIncome);
+            levelUpPrice = BusinessCalculator.CalculateLevelUpPrice(level, baseCost);
+        }
+
+        private void UpdateBusinessState(int business)
+        {
+            var level = _levelPool.Get(business).Value;
+            
+            if (level > 0)
+            {
+                MarkPurchasedIfNot(business);
+                MarkIncomeCooldownAvailableIfNot(business);
+            }
+        }
+
+        private void NotifyBusinessUpdate(int business)
+        {
+            var businessId = _businessIdPool.Get(business).Value;
+            var level = _levelPool.Get(business).Value;
+            var income = _incomePool.Get(business).Value;
+            var levelUpPrice = _levelUpPricePool.Get(business).Value;
+            var name = _namePool.Get(business).Value;
+
+            _businessService.NotifyBusinessDataUpdated(businessId, level, income, levelUpPrice, name);
+        }
+
+        private static int CalculateNewIncome(List<UpgradeData> upgradeDatas, int level, int baseIncome)
+        {
+            float firstModifier = upgradeDatas[0].Purchased ? upgradeDatas[0].IncomeMultiplier : 0;
+            float secondModifier = upgradeDatas[1].Purchased ? upgradeDatas[1].IncomeMultiplier : 0;
+
+            return Mathf.RoundToInt(BusinessCalculator.CalculateIncome(level, baseIncome, firstModifier, secondModifier));
+        }
+
+        private void MarkIncomeCooldownAvailableIfNot(int business)
+        {
+            if (!_incomeCooldownAvailablePool.Has(business))
+            {
+                _incomeCooldownAvailablePool.Add(business).Value = true;
+            }
+        }
+
+        private void MarkPurchasedIfNot(int business)
+        {
+            if (!_purchasedPool.Has(business))
+            {
+                _purchasedPool.Add(business).Value = true;
+            }
+        }
+
+        private void InitializeFilters()
+        {
             _businesses = _world.Filter<BusinessComponent>()
                 .Inc<BusinessIdComponent>()
                 .Inc<IncomeComponent>()
@@ -51,11 +166,13 @@ namespace Code.Systems.Business
                 .Inc<LevelUpPriceComponent>()
                 .End();
 
-            _businessIdPool = _world.GetPool<BusinessIdComponent>();
-
             _updateRequest = _world.Filter<UpdateBusinessRequestComponent>()
                 .End();
+        }
 
+        private void InitializePools()
+        {
+            _businessIdPool = _world.GetPool<BusinessIdComponent>();
             _businessUpdateRequestPool = _world.GetPool<UpdateBusinessRequestComponent>();
             _incomePool = _world.GetPool<IncomeComponent>();
             _baseIncomePool = _world.GetPool<BaseIncomeComponent>();
@@ -66,84 +183,6 @@ namespace Code.Systems.Business
             _incomeCooldownAvailablePool = _world.GetPool<IncomeСooldownAvailableComponent>();
             _levelUpPricePool = _world.GetPool<LevelUpPriceComponent>();
             _namePool = _world.GetPool<NameComponent>();
-        }
-
-        public void Run(IEcsSystems systems)
-        {
-            foreach (int updateRequest in _updateRequest)
-            foreach (int business in _businesses)
-            {
-                int id = _businessIdPool.Get(business).Value;
-                UpdateBusinessRequest upgradeRequest = _businessUpdateRequestPool.Get(updateRequest).Value;
-
-                if (upgradeRequest.Id != id)
-                    continue;
-
-                UpdateData(business, upgradeRequest);
-            }
-        }
-
-        private void UpdateData(int business, UpdateBusinessRequest upgradeRequest)
-        {
-            int businessId = _businessIdPool.Get(business).Value;
-            ref int levelUpPrice = ref _levelUpPricePool.Get(business).Value;
-
-            ref List<UpgradeData> upgradeDatas = ref _updateBusinessModifiersPool.Get(business).Value;
-
-            Debug.Log($"{upgradeRequest.UpdateModifierData.Id} - id");
-
-            if (upgradeRequest.UpdateModifierData.Id > -1)
-            {
-                UpgradeData upgradeData = upgradeDatas[upgradeRequest.UpdateModifierData.Id];
-
-                if (!upgradeData.Purchased)
-                    upgradeData.Purchased = true;
-
-                Debug.Log($"{upgradeData.Purchased} - {upgradeData.Cost} - {upgradeData.IncomeMultiplier} - {upgradeRequest.Id}");
-            }
-
-            ref int level = ref _levelPool.Get(business).Value;
-            ref int income = ref _incomePool.Get(business).Value;
-            int baseIncome = _baseIncomePool.Get(business).Value;
-            int baseCost = _baseCostPool.Get(business).Value;
-
-            if (upgradeRequest.Level > -1)
-                level += upgradeRequest.Level;
-
-            income = CalculateNewIncome(upgradeDatas, level, baseIncome);
-            levelUpPrice = BusinessCalculator.CalculateLevelUpPrice(level, baseCost);
-
-            MarkPurchasedIfNot(business, level);
-
-            MarkIncomeCooldownAvailableIfNot(business, level);
-
-            string name = _namePool.Get(business).Value;
-
-            _businessService.NotifyBusinessDataUpdated(businessId, level, income, levelUpPrice, name);
-        }
-
-        private static int CalculateNewIncome(List<UpgradeData> upgradeDatas, int level, int baseIncome)
-        {
-            float firstModifier = upgradeDatas[0].Purchased ? upgradeDatas[0].IncomeMultiplier : 0;
-            float secondModifier = upgradeDatas[1].Purchased ? upgradeDatas[1].IncomeMultiplier : 0;
-
-            Debug.Log($"{secondModifier}");
-
-            return Mathf.RoundToInt(
-                BusinessCalculator.CalculateIncome(level, baseIncome, firstModifier, secondModifier));
-            ;
-        }
-
-        private void MarkIncomeCooldownAvailableIfNot(int business, int level)
-        {
-            if (!_incomeCooldownAvailablePool.Has(business) && level > 0)
-                _incomeCooldownAvailablePool.Add(business).Value = true;
-        }
-
-        private void MarkPurchasedIfNot(int business, int level)
-        {
-            if (!_purchasedPool.Has(business) && level > 0)
-                _purchasedPool.Add(business).Value = true;
         }
     }
 }
