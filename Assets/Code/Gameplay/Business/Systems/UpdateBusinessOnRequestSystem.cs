@@ -52,7 +52,7 @@ namespace Code.Gameplay.Business.Systems
         private void ProcessUpdateRequest(int updateRequest)
         {
             var request = _businessUpdateRequestPool.Get(updateRequest).Value;
-            
+
             foreach (int business in _businesses)
             {
                 if (!IsMatchingBusiness(business, request))
@@ -83,8 +83,8 @@ namespace Code.Gameplay.Business.Systems
 
             ref var upgradeDatas = ref _updateBusinessModifiersPool.Get(business).Value;
             var upgradeData = upgradeDatas[request.UpdateModifierData.Id];
-            
-            if (!upgradeData.Purchased) 
+
+            if (!upgradeData.Purchased)
                 upgradeData.Purchased = true;
         }
 
@@ -98,7 +98,7 @@ namespace Code.Gameplay.Business.Systems
             var baseCost = _baseCostPool.Get(business).Value;
             var upgradeDatas = _updateBusinessModifiersPool.Get(business).Value;
 
-            if (request.Level > -1) 
+            if (request.Level > -1)
                 level += request.Level;
 
             income = CalculateNewIncome(upgradeDatas, level, baseIncome);
@@ -108,7 +108,7 @@ namespace Code.Gameplay.Business.Systems
         private void UpdateBusinessState(int business)
         {
             var level = _levelPool.Get(business).Value;
-            
+
             if (level > 0)
             {
                 MarkPurchasedIfNot(business);
@@ -123,6 +123,8 @@ namespace Code.Gameplay.Business.Systems
             var income = _incomePool.Get(business).Value;
             var levelUpPrice = _levelUpPricePool.Get(business).Value;
             var name = _namePool.Get(business).Value;
+
+            Debug.Log($"{_purchasedPool.Get(businessId).Value} - purchased");
 
             _businessService.NotifyBusinessDataUpdated(businessId, level, income, levelUpPrice, name);
         }
@@ -140,7 +142,10 @@ namespace Code.Gameplay.Business.Systems
             if (!_incomeCooldownAvailablePool.Has(business))
             {
                 _incomeCooldownAvailablePool.Add(business).Value = true;
+                return;
             }
+
+            _incomeCooldownAvailablePool.Get(business).Value = true;
         }
 
         private void MarkPurchasedIfNot(int business)
@@ -148,7 +153,10 @@ namespace Code.Gameplay.Business.Systems
             if (!_purchasedPool.Has(business))
             {
                 _purchasedPool.Add(business).Value = true;
+                return;
             }
+
+            _purchasedPool.Get(business).Value = true;
         }
 
         private void InitializeFilters()

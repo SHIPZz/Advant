@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UniRx;
+using UnityEngine;
 
 namespace Code.Gameplay.Business
 {
@@ -17,17 +18,20 @@ namespace Code.Gameplay.Business
         public ReactiveProperty<string> GetNameProperty(int id) => GetOrCreateProperty(_nameProperties, id);
         public ReactiveProperty<float> GetProgressProperty(int id) => GetOrCreateProperty(_progressProperties, id);
         public ReactiveProperty<int> GetIncomeProperty(int id) => GetOrCreateProperty(_incomeProperties, id);
-        public ReactiveProperty<int> GetLevelUpPriceProperty(int id) => GetOrCreateProperty(_levelUpPriceProperties, id);
-        public ReactiveProperty<bool> GetPurchasedProperty(int id) => GetOrCreateProperty(_purchasedProperties, id);
-        public ReactiveProperty<bool> GetUpgradeProperty(int businessId, int upgradeId) => GetOrCreateUpgradeProperty(businessId, upgradeId);
 
-        public void UpdateBusinessData(int id, int level, int income, int levelUpPrice, string name, Dictionary<int, bool> upgrades = null)
+        public ReactiveProperty<int> GetLevelUpPriceProperty(int id) =>
+            GetOrCreateProperty(_levelUpPriceProperties, id);
+
+        public ReactiveProperty<bool> GetPurchasedProperty(int id) => GetOrCreateProperty(_purchasedProperties, id);
+
+        public ReactiveProperty<bool> GetUpgradeProperty(int businessId, int upgradeId) =>
+            GetOrCreateUpgradeProperty(businessId, upgradeId);
+
+        public void UpdateBusinessData(int id, int level, int income, int levelUpPrice, string name,
+            Dictionary<int, bool> upgrades = null)
         {
             if (level > -1)
                 GetOrCreateProperty(_levelProperties, id).Value = level;
-
-            if (level > 0)
-                GetOrCreateProperty(_purchasedProperties, id).Value = true;
 
             if (income > -1)
                 GetOrCreateProperty(_incomeProperties, id).Value = income;
@@ -45,6 +49,8 @@ namespace Code.Gameplay.Business
                     GetOrCreateUpgradeProperty(id, upgrade.Key).Value = upgrade.Value;
                 }
             }
+            
+            GetPurchasedProperty(id).Value = level > 0;
         }
 
         public void UpdateProgress(int id, float progress)
@@ -77,4 +83,4 @@ namespace Code.Gameplay.Business
             return _upgradeProperties[businessId][upgradeId];
         }
     }
-} 
+}

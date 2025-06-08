@@ -55,10 +55,11 @@ namespace Code.Gameplay.Business.Factory
             _modifiersPool = world.GetPool<UpdateBusinessModifiersComponent>();
         }
 
-        public int CreateBusiness(BusinessData businessData, BusinessUpgradeNameData businessNameData, int businessIndex, int ownerId)
+        public int CreateBusiness(BusinessData businessData, BusinessUpgradeNameData businessNameData,
+            int businessIndex, int ownerId)
         {
             int entity = _world.NewEntity();
-            
+
             AddBasicComponents(entity, businessIndex, businessNameData.Name, ownerId);
             AddIncomeComponents(entity, businessData);
             AddLevelComponents(entity, businessData, businessIndex);
@@ -119,10 +120,10 @@ namespace Code.Gameplay.Business.Factory
             {
                 ref var incomeСooldownAvailable = ref _incomeCooldownAvailablePool.Add(entity);
                 incomeСooldownAvailable.Value = true;
-
-                ref var purchased = ref _purchasedPool.Add(entity);
-                purchased.Value = true;
             }
+
+            ref var purchased = ref _purchasedPool.Add(entity);
+            purchased.Value = level.Value > 0;
         }
 
         private void AddProgressComponents(int entity)
@@ -137,4 +138,4 @@ namespace Code.Gameplay.Business.Factory
             modifiers.Value = new List<UpgradeData>(businessData.Upgrades.ToList());
         }
     }
-} 
+}

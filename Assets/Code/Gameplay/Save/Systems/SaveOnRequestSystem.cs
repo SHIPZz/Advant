@@ -90,8 +90,8 @@ namespace Code.Gameplay.Save.Systems
                     Cooldown = currentCooldown,
                     Income = _incomePool.Get(business).Value,
                     LevelUpPrice = _levelUpPricePool.Get(business).Value,
-                    IsPurchased = _purchasedPool.Has(business),
-                    IsCooldownAvailable = _cooldownAvailablePool.Has(business)
+                    IsPurchased = _purchasedPool.Has(business) && _purchasedPool.Get(business).Value,
+                    IsCooldownAvailable = _cooldownAvailablePool.Has(business) && _cooldownAvailablePool.Get(business).Value
                 };
 
                 if (_updateBusinessModifiersPool.Has(business))

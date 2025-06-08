@@ -23,8 +23,9 @@ namespace Code.UI.Business
                 .Subscribe(SetupAfterPurchasing)
                 .AddTo(this);
             
-            model.PurchaseAvailable
-                .Subscribe(isAvailable => _upgradeButton.interactable = isAvailable)
+            model.PurchaseAvailable.CombineLatest(model.Purchased,
+                (purchasingAvailable, isPurchased) => purchasingAvailable && !isPurchased)
+                .Subscribe(isInteractable => _upgradeButton.interactable = isInteractable)
                 .AddTo(this);
 
             model.UpgradeState
@@ -41,8 +42,6 @@ namespace Code.UI.Business
 
         private void SetupAfterPurchasing(bool purchased)
         {
-            _upgradeButton.interactable = !purchased;
-            
             _priceText.gameObject.SetActive(!purchased);
             _purchasedText.gameObject.SetActive(purchased);
         }

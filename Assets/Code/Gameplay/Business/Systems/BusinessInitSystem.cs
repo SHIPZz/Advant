@@ -1,4 +1,5 @@
-﻿using Code.Common.Components;
+﻿using System.Collections.Generic;
+using Code.Common.Components;
 using Code.Common.Services;
 using Code.Gameplay.Business.Components;
 using Code.Gameplay.Business.Configs;
@@ -7,7 +8,6 @@ using Code.Gameplay.Hero.Components;
 using Code.Gameplay.Save;
 using Code.Gameplay.Save.Models;
 using Leopotam.EcsLite;
-using System.Collections.Generic;
 
 namespace Code.Gameplay.Business.Systems
 {
@@ -20,7 +20,7 @@ namespace Code.Gameplay.Business.Systems
         private readonly ISaveService _saveService;
 
         private BusinessFactory _businessFactory;
-        
+
         private EcsPool<IdComponent> _idPool;
         private EcsPool<BusinessIdComponent> _businessIdPool;
         private EcsPool<LevelComponent> _levelPool;
@@ -35,7 +35,7 @@ namespace Code.Gameplay.Business.Systems
         public BusinessInitSystem(
             BusinessUpgradeNamesConfig businessUpgradeNamesConfig,
             IIdentifierService identifierService,
-            BusinessConfig businessConfig, 
+            BusinessConfig businessConfig,
             BusinessService businessService,
             ISaveService saveService)
         {
@@ -49,10 +49,10 @@ namespace Code.Gameplay.Business.Systems
         public void Init(IEcsSystems systems)
         {
             var world = systems.GetWorld();
-            
+
             _businessFactory = new BusinessFactory(world, _identifierService);
             InitializePools(world);
-            
+
             var heroId = GetHeroId(world);
             var businessDatas = _businessConfig.GetBusinessDatas();
             var saveData = _saveService.HasSave() ? _saveService.LoadGame() : null;
@@ -68,17 +68,18 @@ namespace Code.Gameplay.Business.Systems
                 var businessNameData = _businessUpgradeNamesConfig.BusinessUpgradeNameDatas[i];
 
                 int entity = _businessFactory.CreateBusiness(businessData, businessNameData, i, heroId);
-                
-                if (saveData != null) 
+
+                if (saveData != null)
                     RestoreBusinessState(entity, saveData.Businesses.Find(b => b.Id == i));
-                
+
                 NotifyBusinessDataUpdated(entity, businessNameData.Name);
             }
         }
 
         private void RestoreBusinessState(int entity, BusinessSaveModel savedBusiness)
         {
-            if (savedBusiness == null) return;
+            if (savedBusiness == null)
+                return;
 
             RestoreBasicProperties(entity, savedBusiness);
             RestoreBusinessFlags(entity, savedBusiness);
@@ -96,8 +97,17 @@ namespace Code.Gameplay.Business.Systems
 
         private void RestoreBusinessFlags(int entity, BusinessSaveModel savedBusiness)
         {
-            if (savedBusiness.IsPurchased && !_purchasedPool.Has(entity))
-                _purchasedPool.Add(entity).Value = true;
+            if (savedBusiness == null)
+                return;
+
+            if (_purchasedPool.Has(entity))
+            {
+                _purchasedPool.Get(entity).Value = savedBusiness.IsPurchased;
+            }
+            else
+            {
+                _purchasedPool.Add(entity).Value = savedBusiness.IsPurchased;
+            }
 
             if (savedBusiness.IsCooldownAvailable && !_cooldownAvailablePool.Has(entity))
                 _cooldownAvailablePool.Add(entity).Value = true;
@@ -108,8 +118,8 @@ namespace Code.Gameplay.Business.Systems
             if (!_updateBusinessModifiersPool.Has(entity))
                 return;
 
-            List<UpgradeData> upgradeDatas = _updateBusinessModifiersPool.Get(entity).Value;
-            
+            ref List<UpgradeData> upgradeDatas = ref _updateBusinessModifiersPool.Get(entity).Value;
+
             foreach (UpgradeSaveModel savedUpgrade in savedBusiness.Upgrades)
             {
                 if (savedUpgrade.Id < upgradeDatas.Count)
@@ -140,7 +150,7 @@ namespace Code.Gameplay.Business.Systems
 
             foreach (int hero in heroFilter)
                 return _idPool.Get(hero).Value;
-            
+
             return -1;
         }
 
@@ -152,13 +162,13 @@ namespace Code.Gameplay.Business.Systems
             var levelUpPrice = _levelUpPricePool.Get(entity).Value;
 
             Dictionary<int, bool> upgrades = null;
-            
+
             if (_updateBusinessModifiersPool.Has(entity))
             {
                 List<UpgradeData> upgradeDatas = _updateBusinessModifiersPool.Get(entity).Value;
                 upgrades = new Dictionary<int, bool>();
-                
-                for (int i = 0; i < upgradeDatas.Count; i++) 
+
+                for (int i = 0; i < upgradeDatas.Count; i++)
                     upgrades[i] = upgradeDatas[i].Purchased;
             }
 
