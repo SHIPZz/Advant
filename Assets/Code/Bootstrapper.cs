@@ -39,7 +39,7 @@ namespace Code
             IMoneyService moneyService = new HeroMoneyService(currencyModel, _world);
             moneyService.Initialize();
 
-            BusinessService businessService = new BusinessService(businessConfig, _world, businessUpgradeNamesConfig, moneyService);
+            BusinessService businessService = new BusinessService(_world, moneyService);
             businessService.Initialize();
 
             _moneyView.Initialize(new CurrencyScreenModel(currencyModel));

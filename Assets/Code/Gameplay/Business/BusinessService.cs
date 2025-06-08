@@ -12,8 +12,6 @@ namespace Code.Gameplay.Business
 {
     public class BusinessService : IInitializable
     {
-        private readonly BusinessConfig _businessConfig;
-        private readonly BusinessUpgradeNamesConfig _businessUpgradeNamesConfig;
         private readonly IMoneyService _moneyService;
         private readonly EcsWorld _ecsWorld;
         private EcsPool<UpdateBusinessRequestComponent> _updateRequestPool;
@@ -25,15 +23,10 @@ namespace Code.Gameplay.Business
         private readonly Dictionary<int, ReactiveProperty<int>> _levelUpPriceProperties = new();
         private readonly Dictionary<int, ReactiveProperty<bool>> _purchasedProperties = new();
 
-        public BusinessService(BusinessConfig businessConfig,
-            EcsWorld ecsWorld,
-            BusinessUpgradeNamesConfig businessUpgradeNamesConfig,
-            IMoneyService moneyService)
+        public BusinessService(EcsWorld ecsWorld, IMoneyService moneyService)
         {
             _ecsWorld = ecsWorld;
             _moneyService = moneyService;
-            _businessUpgradeNamesConfig = businessUpgradeNamesConfig;
-            _businessConfig = businessConfig;
         }
 
         public ReactiveProperty<int> GetLevelProperty(int id) => GetOrCreateProperty(_levelProperties, id);
