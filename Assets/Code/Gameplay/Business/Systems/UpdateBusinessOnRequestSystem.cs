@@ -2,7 +2,6 @@
 using Code.Common.Components;
 using Code.Gameplay.Business.Components;
 using Code.Gameplay.Business.Configs;
-using Code.Gameplay.Money;
 using Code.Gameplay.Requests;
 using Code.Utils;
 using Leopotam.EcsLite;
@@ -13,7 +12,6 @@ namespace Code.Gameplay.Business.Systems
     public class UpdateBusinessOnRequestSystem : IEcsInitSystem, IEcsRunSystem
     {
         private readonly BusinessService _businessService;
-        private readonly IMoneyService _moneyService;
 
         private EcsWorld _world;
         private EcsFilter _businesses;
@@ -31,9 +29,8 @@ namespace Code.Gameplay.Business.Systems
         private EcsPool<BaseCostComponent> _baseCostPool;
         private EcsPool<NameComponent> _namePool;
 
-        public UpdateBusinessOnRequestSystem(BusinessService businessService, IMoneyService moneyService)
+        public UpdateBusinessOnRequestSystem(BusinessService businessService)
         {
-            _moneyService = moneyService;
             _businessService = businessService;
         }
 
