@@ -2,10 +2,10 @@ using System.Collections.Generic;
 using Code.Common.Services;
 using Code.Gameplay.Business;
 using Code.Gameplay.Business.Configs;
-using Code.Gameplay.Business.Systems;
-using Code.Gameplay.Hero.Systems;
+using Code.Gameplay.Business.Features;
+using Code.Gameplay.Hero.Features;
 using Code.Gameplay.Money;
-using Code.Gameplay.Money.Systems;
+using Code.Gameplay.Money.Features;
 using Code.UI.Business;
 using Code.UI.Money;
 using Leopotam.EcsLite;
@@ -45,7 +45,7 @@ namespace Code
 
             CreateBusinessViews(businessConfig.GetBusinessDatas(), staticData, businessService, businessUpgradeNamesConfig);
 
-            InitSystems(businessService, moneyService, businessUpgradeNamesConfig, businessConfig);
+            InitFeatures(businessService, moneyService, businessUpgradeNamesConfig, businessConfig);
         }
 
         private void Update()
@@ -61,21 +61,19 @@ namespace Code
             _world = null;
         }
 
-        private void InitSystems(BusinessService businessService, IMoneyService heroMoneyService,
+        private void InitFeatures(BusinessService businessService, IMoneyService heroMoneyService,
             BusinessUpgradeNamesConfig businessUpgradeNamesConfig, BusinessConfig businessConfig)
         {
-            _systems
-                .Add(new HeroInitSystem(_identifierService))
-                .Add(new BusinessInitSystem(businessUpgradeNamesConfig, _identifierService, businessConfig,businessService))
-                .Add(new CalculateIncomeCooldownSystem())
-                .Add(new CalculateBusinessProgressSystem(businessService))
-                .Add(new CreateMoneyUpdateRequestOnIncomeCooldownUpSystem())
-                .Add(new UpdateMoneyOnRequestSystem())
-                .Add(new UpdateHeroMoneySystem(heroMoneyService))
-                .Add(new UpdateBusinessOnRequestSystem(businessService,heroMoneyService))
-                .Add(new CleanupBusinessRequestsSystem())
-                .Add(new CleanupMoneyRequestsSystem())
-                .Init();
+            var heroFeature = new HeroFeature(_world, _systems, _identifierService);
+            var businessFeature = new BusinessFeature(_world, _systems, businessService, heroMoneyService, 
+                _identifierService, businessUpgradeNamesConfig, businessConfig);
+            var moneyFeature = new MoneyFeature(_world, _systems, heroMoneyService);
+
+            heroFeature.RegisterSystems();
+            businessFeature.RegisterSystems();
+            moneyFeature.RegisterSystems();
+
+            _systems.Init();
         }
 
         private void CreateBusinessViews(IReadOnlyList<BusinessData> businessDatas, StaticDataService staticData,
