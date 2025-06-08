@@ -65,8 +65,7 @@ namespace Code
             BusinessUpgradeNamesConfig businessUpgradeNamesConfig, BusinessConfig businessConfig)
         {
             var heroFeature = new HeroFeature(_world, _systems, _identifierService);
-            var businessFeature = new BusinessFeature(_world, _systems, businessService, heroMoneyService, 
-                _identifierService, businessUpgradeNamesConfig, businessConfig);
+            var businessFeature = new BusinessFeature(_world, _systems, businessService, heroMoneyService, _identifierService, businessUpgradeNamesConfig, businessConfig);
             var moneyFeature = new MoneyFeature(_world, _systems, heroMoneyService);
 
             heroFeature.RegisterSystems();

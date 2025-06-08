@@ -13,16 +13,25 @@ namespace Code.Gameplay.Business.Systems
     {
         private readonly BusinessConfig _businessConfig;
         private readonly BusinessUpgradeNamesConfig _businessUpgradeNamesConfig;
-        private readonly IIdentifierService _identifierService;
         private readonly BusinessService _businessService;
+        private readonly IIdentifierService _identifierService;
+        private BusinessFactory _businessFactory;
+
+        private EcsPool<HeroComponent> _heroPool;
+        private EcsPool<IdComponent> _idPool;
+        private EcsPool<BusinessIdComponent> _businessIdPool;
+        private EcsPool<LevelComponent> _levelPool;
+        private EcsPool<IncomeComponent> _incomePool;
+        private EcsPool<LevelUpPriceComponent> _levelUpPricePool;
 
         public BusinessInitSystem(
             BusinessUpgradeNamesConfig businessUpgradeNamesConfig,
             IIdentifierService identifierService,
-            BusinessConfig businessConfig, BusinessService businessService)
+            BusinessConfig businessConfig, 
+            BusinessService businessService)
         {
-            _businessUpgradeNamesConfig = businessUpgradeNamesConfig;
             _identifierService = identifierService;
+            _businessUpgradeNamesConfig = businessUpgradeNamesConfig;
             _businessConfig = businessConfig;
             _businessService = businessService;
         }
@@ -30,100 +39,51 @@ namespace Code.Gameplay.Business.Systems
         public void Init(IEcsSystems systems)
         {
             var world = systems.GetWorld();
-            var businessPool = world.GetPool<BusinessComponent>();
-            var businessIdPool = world.GetPool<BusinessIdComponent>();
-            var levelPool = world.GetPool<LevelComponent>();
-            var incomePool = world.GetPool<IncomeComponent>();
-            var incomeCooldownPool = world.GetPool<IncomeСooldownComponent>();
-            var incomeCooldownAvailablePool = world.GetPool<IncomeСooldownAvailableComponent>();
-            var incomeCooldownLeftPool = world.GetPool<IncomeСooldownLeftComponent>();
-            var incomeCooldownUpPool = world.GetPool<IncomeСooldownUpComponent>();
-            var baseIncomePool = world.GetPool<BaseIncomeComponent>();
-            var updateModifiers = world.GetPool<UpdateBusinessModifiersComponent>();
-            var idPool = world.GetPool<IdComponent>();
-            var levelUpPricePool = world.GetPool<LevelUpPriceComponent>();
-            var purchasedPool = world.GetPool<PurchasedComponent>();
-            var baseCostPool = world.GetPool<BaseCostComponent>();
-            var namePool = world.GetPool<NameComponent>();
-            var progressPool = world.GetPool<ProgressComponent>();
-            var ownerIdPool = world.GetPool<OwnerIdComponent>();
-            var heroFilter = world.Filter<HeroComponent>().End();
-
+            
+            _businessFactory = new BusinessFactory(world, _identifierService);
+            
+            InitializePools(world);
+            var heroId = GetHeroId(world);
             var businessDatas = _businessConfig.GetBusinessDatas();
 
             for (int i = 0; i < businessDatas.Count; i++)
             {
-                int entity = world.NewEntity();
                 var businessData = businessDatas[i];
                 var businessNameData = _businessUpgradeNamesConfig.BusinessUpgradeNameDatas[i];
 
-                ref var business = ref businessPool.Add(entity);
-                business.Value = true;
-
-                ref var businessId = ref businessIdPool.Add(entity);
-                businessId.Value = i;
-
-                ref var name = ref namePool.Add(entity);
-                name.Value = businessNameData.Name;
-
-                ref var level = ref levelPool.Add(entity);
-                level.Value = i == 0 ? 1 : 0;
-
-                ref var income = ref incomePool.Add(entity);
-                income.Value = businessData.BaseIncome;
-
-                ref var baseIncome = ref baseIncomePool.Add(entity);
-                baseIncome.Value = businessData.BaseIncome;
-
-                ref var id = ref idPool.Add(entity);
-                id.Value = _identifierService.Next();
-
-                ref var ownerId = ref ownerIdPool.Add(entity);
-
-                foreach (var hero in heroFilter)
-                {
-                    int heroId = idPool.Get(hero).Value;
-                    ownerId.Value = heroId;
-                }
-
-                ref var incomeСooldown = ref incomeCooldownPool.Add(entity);
-                incomeСooldown.Value = businessData.IncomeDelay;
-
-                ref var incomeСooldownLeft = ref incomeCooldownLeftPool.Add(entity);
-                incomeСooldownLeft.Value = businessData.IncomeDelay;
-
-                ref var incomeСooldownUp = ref incomeCooldownUpPool.Add(entity);
-                incomeСooldownUp.Value = false;
-
-                ref var progress = ref progressPool.Add(entity);
-                progress.Value = 0f;
-
-                ref var baseCost = ref baseCostPool.Add(entity).Value;
-                baseCost = businessData.BaseCost;
-
-                ref var levelUpPrice = ref levelUpPricePool.Add(entity);
-                levelUpPrice.Value = (level.Value + 1) * baseCost;
-                
-                SetupFirstBusiness(level, incomeCooldownAvailablePool, entity, purchasedPool);
-
-                ref var modifiers = ref updateModifiers.Add(entity);
-                modifiers.Value = new List<UpgradeData>(businessData.Upgrades.ToList());
-
-                _businessService.NotifyBusinessDataUpdated(businessId.Value, level.Value, income.Value,
-                    levelUpPricePool.Get(entity).Value, name.Value);
+                int entity = _businessFactory.CreateBusiness(businessData, businessNameData, i, heroId);
+                NotifyBusinessDataUpdated(world, entity, businessNameData.Name);
             }
         }
 
-        private static void SetupFirstBusiness(LevelComponent level, EcsPool<IncomeСooldownAvailableComponent> incomeCooldownAvailablePool, int entity,
-            EcsPool<PurchasedComponent> purchasedPool)
+        private void InitializePools(EcsWorld world)
         {
-            if (level.Value > 0)
+            _heroPool = world.GetPool<HeroComponent>();
+            _idPool = world.GetPool<IdComponent>();
+            _businessIdPool = world.GetPool<BusinessIdComponent>();
+            _levelPool = world.GetPool<LevelComponent>();
+            _incomePool = world.GetPool<IncomeComponent>();
+            _levelUpPricePool = world.GetPool<LevelUpPriceComponent>();
+        }
+
+        private int GetHeroId(EcsWorld world)
+        {
+            var heroFilter = world.Filter<HeroComponent>().End();
+            foreach (var hero in heroFilter)
             {
-                ref var incomeСooldownAvailable = ref incomeCooldownAvailablePool.Add(entity);
-                incomeСooldownAvailable.Value = true;
-                ref var purchased = ref purchasedPool.Add(entity);
-                purchased.Value = true;
+                return _idPool.Get(hero).Value;
             }
+            return -1;
+        }
+
+        private void NotifyBusinessDataUpdated(EcsWorld world, int entity, string name)
+        {
+            var businessId = _businessIdPool.Get(entity).Value;
+            var level = _levelPool.Get(entity).Value;
+            var income = _incomePool.Get(entity).Value;
+            var levelUpPrice = _levelUpPricePool.Get(entity).Value;
+
+            _businessService.NotifyBusinessDataUpdated(businessId, level, income, levelUpPrice, name);
         }
     }
 }
