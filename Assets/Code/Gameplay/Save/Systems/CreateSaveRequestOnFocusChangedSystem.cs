@@ -4,26 +4,33 @@ using UnityEngine;
 
 namespace Code.Gameplay.Save.Systems
 {
-    public class SaveRequestSystem : IEcsInitSystem, IEcsRunSystem
+    public class CreateSaveRequestOnFocusChangedSystem : IEcsInitSystem, IEcsRunSystem
     {
         private EcsWorld _world;
-        private bool _wasFocused = true;
+        private bool _isPaused;
 
         public void Init(IEcsSystems systems)
         {
             _world = systems.GetWorld();
+            _isPaused = false;
         }
 
         public void Run(IEcsSystems systems)
         {
-            bool isFocused = Application.isFocused;
-            
-            if (_wasFocused && !isFocused)
+            if (Application.isFocused && _isPaused)
             {
                 SendSaveRequest();
+                _isPaused = false;
             }
-            
-            _wasFocused = isFocused;
+        }
+
+        private void OnApplicationPause(bool pauseStatus)
+        {
+            if (pauseStatus)
+            {
+                SendSaveRequest();
+                _isPaused = true;
+            }
         }
 
         private void SendSaveRequest()

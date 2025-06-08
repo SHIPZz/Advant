@@ -16,8 +16,7 @@ namespace Code.UI.Business
         public IReadOnlyReactiveProperty<bool> PurchaseAvailable => _businessService.GetPurchasedProperty(BusinessId.Value);
         public IReadOnlyReactiveProperty<bool> UpgradeState => _businessService.GetUpgradeProperty(BusinessId.Value, Id.Value);
 
-        public UpgradeBusinessScreenModel(bool purchased, float income, int price, string name, int id, int businessId,
-            BusinessService businessService)
+        public UpgradeBusinessScreenModel(bool purchased, float income, int price, string name, int id, int businessId, BusinessService businessService)
         {
             _businessService = businessService;
             Purchased = new ReactiveProperty<bool>(purchased);

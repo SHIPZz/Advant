@@ -71,11 +71,15 @@ namespace Code.Gameplay.Save.Systems
                 Hero = new HeroSaveModel()
             };
 
-            foreach (var hero in _heroFilter)
-            {
-                saveData.Hero.Money = _moneyPool.Get(hero).Value;
-            }
+            SaveHero(saveData);
 
+            SaveBusinesses(saveData);
+
+            _saveService.SaveGame(saveData);
+        }
+
+        private void SaveBusinesses(GameSaveModel saveData)
+        {
             foreach (var business in _businessFilter)
             {
                 float totalCooldown = _cooldownPool.Get(business).Value;
@@ -109,8 +113,14 @@ namespace Code.Gameplay.Save.Systems
 
                 saveData.Businesses.Add(businessSave);
             }
+        }
 
-            _saveService.SaveGame(saveData);
+        private void SaveHero(GameSaveModel saveData)
+        {
+            foreach (var hero in _heroFilter)
+            {
+                saveData.Hero.Money = _moneyPool.Get(hero).Value;
+            }
         }
     }
 } 

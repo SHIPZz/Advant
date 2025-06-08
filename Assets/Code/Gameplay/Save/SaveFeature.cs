@@ -16,7 +16,8 @@ namespace Code.Gameplay.Save
         public override void RegisterSystems()
         {
             Systems
-                .Add(new SaveRequestSystem())
+                .Add(new CreateSaveRequestOnFocusChangedSystem())
+                .Add(new CreateSaveRequestOnTimerSystem())
                 .Add(new SaveOnRequestSystem(_saveService));
         }
     }

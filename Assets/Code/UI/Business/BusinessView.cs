@@ -19,7 +19,7 @@ namespace Code.UI.Business
         public void Initialize(BusinessScreenModel model)
         {
             model.Level
-                .Subscribe(level => _levelText.text = level.ToString())
+                .Subscribe(level => _levelText.text = $"LVL: \n{level}" )
                 .AddTo(this);
 
             model.Name
