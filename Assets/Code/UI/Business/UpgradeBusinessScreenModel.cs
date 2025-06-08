@@ -3,7 +3,7 @@ using UniRx;
 
 namespace Code.UI.Business
 {
-    public struct UpgradeBusinessScreenModel
+    public class UpgradeBusinessScreenModel
     {
         public readonly ReactiveProperty<bool> Purchased;
         public readonly ReactiveProperty<float> IncomeMultiplier;
@@ -12,6 +12,8 @@ namespace Code.UI.Business
         public readonly ReactiveProperty<int> Id;
         public readonly ReactiveProperty<int> BusinessId;
         private readonly BusinessService _businessService;
+
+        public  IReadOnlyReactiveProperty<bool> PurchaseAvailable => _businessService.GetPurchasedProperty(BusinessId.Value);
 
         public UpgradeBusinessScreenModel(bool purchased, float income, int price, string name, int id, int businessId,
             BusinessService businessService)

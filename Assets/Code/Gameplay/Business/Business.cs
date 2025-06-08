@@ -20,12 +20,15 @@ namespace Code.Gameplay.Business
         
         public ReactiveCollection<UpgradeData> Upgrades { get; }
 
+        public ReactiveProperty<bool> Purchased { get; }
+
         public Business(int id)
         {
             Level = new ReactiveProperty<int>();
             Name = new ReactiveProperty<string>();
             Progress = new ReactiveProperty<float>();
             Income = new ReactiveProperty<int>();
+            Purchased = new ReactiveProperty<bool>();
             BaseIncome = new ReactiveProperty<int>();
             LevelUpPrice = new ReactiveProperty<int>();
             Id = id;

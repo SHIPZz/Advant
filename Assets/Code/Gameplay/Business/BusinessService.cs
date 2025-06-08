@@ -42,6 +42,8 @@ namespace Code.Gameplay.Business
 
         public ReactiveProperty<int> GetLevelUpPriceProperty(int id) => GetBusiness(id).LevelUpPrice;
 
+        public ReactiveProperty<bool> GetPurchasedProperty(int id) => GetBusiness(id).Purchased;
+
         public void Initialize()
         {
             _updateRequestPool = _ecsWorld.GetPool<UpdateBusinessRequestComponent>();
@@ -57,6 +59,7 @@ namespace Code.Gameplay.Business
             {
                 business.Level.Value += 1;
                 business.Income.Value = GetTotalIncome(id);
+                business.Purchased.Value = true;
                 UpdateLevelUpPrice(business);
 
                 CreateUpdateRequest(id, business);
@@ -127,7 +130,10 @@ namespace Code.Gameplay.Business
             BusinessData businessData = datas[id];
 
             if (id == 0)
+            {
                 business.Level.Value = 1;
+                business.Purchased.Value = true;
+            }
 
             BusinessUpgradeNameData businessUpgradeNameData = _businessUpgradeNamesConfig.BusinessUpgradeNameDatas[id];
 

@@ -29,18 +29,16 @@ namespace Code
             _systems = new EcsSystems(_world);
             _identifierService = new IdentifierService();
 
-            var staticData = LoadStaticData();
+            StaticDataService staticData = LoadStaticData();
             BusinessUpgradeNamesConfig businessUpgradeNamesConfig = staticData.GetBusinessUpgradeNamesConfig();
             BusinessConfig businessConfig = staticData.GetBusinessConfig();
-
 
             CurrencyModel currencyModel = new CurrencyModel();
 
             IMoneyService moneyService = new HeroMoneyService(currencyModel, _world);
             moneyService.Initialize();
 
-            BusinessService businessService =
-                new BusinessService(businessConfig, _world, businessUpgradeNamesConfig, moneyService);
+            BusinessService businessService = new BusinessService(businessConfig, _world, businessUpgradeNamesConfig, moneyService);
             businessService.Initialize();
 
             moneyView.Initialize(new CurrencyScreenModel(currencyModel));
@@ -208,7 +206,7 @@ namespace Code
 
             _world.GetPool<MoneyComponent>()
                 .Add(hero)
-                .Value = 1000;
+                .Value = 10000;
 
             _world.GetPool<IdComponent>()
                 .Add(hero)
