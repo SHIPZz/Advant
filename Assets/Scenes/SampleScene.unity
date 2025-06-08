@@ -358,7 +358,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _mainUi: {fileID: 788370220}
   _businessUIParent: {fileID: 1983627695}
-  moneyView: {fileID: 1464039204}
+  _moneyView: {fileID: 1464039204}
 --- !u!4 &1045509077
 Transform:
   m_ObjectHideFlags: 0

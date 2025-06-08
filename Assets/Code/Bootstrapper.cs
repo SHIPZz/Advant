@@ -1,10 +1,12 @@
 using System.Collections.Generic;
 using Code.Common.Services;
-using Code.Components;
 using Code.Configs;
 using Code.Gameplay.Business;
 using Code.Gameplay.Money;
 using Code.Systems;
+using Code.Systems.Business;
+using Code.Systems.Hero;
+using Code.Systems.Money;
 using Code.UI.Business;
 using Code.UI.Money;
 using Leopotam.EcsLite;
@@ -16,12 +18,11 @@ namespace Code
     {
         [SerializeField] private Transform _mainUi;
         [SerializeField] private Transform _businessUIParent;
-        [SerializeField] private MoneyView moneyView;
+        [SerializeField] private MoneyView _moneyView;
 
         private EcsWorld _world;
         private IEcsSystems _systems;
         private IIdentifierService _identifierService;
-        private int _lastBusinessId;
 
         private void Start()
         {
@@ -41,15 +42,12 @@ namespace Code
             BusinessService businessService = new BusinessService(businessConfig, _world, businessUpgradeNamesConfig, moneyService);
             businessService.Initialize();
 
-            moneyView.Initialize(new CurrencyScreenModel(currencyModel));
+            _moneyView.Initialize(new CurrencyScreenModel(currencyModel));
 
-            int heroEntity = CreateHero();
-
-            CreateBusinessEntitiesFromConfig(businessConfig, heroEntity);
             CreateBusinessViews(businessConfig.GetBusinessDatas(), staticData, businessService,
                 businessUpgradeNamesConfig);
 
-            InitSystems(businessService, moneyService);
+            InitSystems(businessService, moneyService, businessUpgradeNamesConfig, businessConfig);
         }
 
         private void Update()
@@ -65,15 +63,18 @@ namespace Code
             _world = null;
         }
 
-        private void InitSystems(BusinessService businessService, IMoneyService heroMoneyService)
+        private void InitSystems(BusinessService businessService, IMoneyService heroMoneyService,
+            BusinessUpgradeNamesConfig businessUpgradeNamesConfig, BusinessConfig businessConfig)
         {
             _systems
+                .Add(new HeroInitSystem(_identifierService))
+                .Add(new BusinessInitSystem(businessUpgradeNamesConfig, _identifierService, businessConfig,businessService))
                 .Add(new CalculateIncomeCooldownSystem())
                 .Add(new CalculateBusinessProgressSystem(businessService))
-                .Add(new CreateMoneyUpdateRequestOnIncomeCooldownUpSystem(businessService))
+                .Add(new CreateMoneyUpdateRequestOnIncomeCooldownUpSystem())
                 .Add(new UpdateMoneyOnRequestSystem())
                 .Add(new UpdateHeroMoneySystem(heroMoneyService))
-                .Add(new UpdateBusinessOnRequestSystem())
+                .Add(new UpdateBusinessOnRequestSystem(businessService,heroMoneyService))
                 .Add(new CleanupBusinessRequestsSystem())
                 .Add(new CleanupMoneyRequestsSystem())
                 .Init();
@@ -82,6 +83,8 @@ namespace Code
         private void CreateBusinessViews(IReadOnlyList<BusinessData> businessDatas, StaticDataService staticData,
             BusinessService businessService, BusinessUpgradeNamesConfig businessUpgradeNamesConfig)
         {
+            int lastBusinessId = 0;
+
             for (int i = 0; i < businessDatas.Count; i++)
             {
                 BusinessView
@@ -92,7 +95,7 @@ namespace Code
                 List<UpgradeBusinessScreenModel> upgradeBusinessScreenModels =
                     CreateUpgradeScreenModels(businessUpgradeNamesConfig, i, businessData, businessService);
 
-                businessView.Initialize(new BusinessScreenModel(businessService, _lastBusinessId++,
+                businessView.Initialize(new BusinessScreenModel(businessService, lastBusinessId++,
                     upgradeBusinessScreenModels));
             }
         }
@@ -102,11 +105,11 @@ namespace Code
             BusinessService businessService)
         {
             List<UpgradeBusinessScreenModel> upgradeBusinessScreenModels = new List<UpgradeBusinessScreenModel>();
-            var upgradeNames = businessUpgradeNamesConfig.BusinessUpgradeNameDatas[businessId].UpgradeNames;
+            List<string> upgradeNames = businessUpgradeNamesConfig.BusinessUpgradeNameDatas[businessId].UpgradeNames;
 
             for (int i = 0; i < businessData.Upgrades.Length; i++)
             {
-                var targetName = upgradeNames[i];
+                string targetName = upgradeNames[i];
 
                 bool purchased = businessData.Upgrades[i].Purchased;
 
@@ -128,91 +131,6 @@ namespace Code
             staticDataService.LoadAll();
 
             return staticDataService;
-        }
-
-        private void CreateBusinessEntitiesFromConfig(BusinessConfig businessConfig, int hero)
-        {
-            IReadOnlyList<BusinessData> list = businessConfig.GetBusinessDatas();
-
-            EcsPool<IdComponent> idPool = _world.GetPool<IdComponent>();
-            int ownerId = idPool.Get(hero).Value;
-
-            for (var index = 0; index < list.Count; index++)
-            {
-                int business = _world.NewEntity();
-
-                BusinessData businessData = list[index];
-
-                _world.GetPool<BusinessComponent>()
-                        .Add(business)
-                        .Value = true
-                    ;
-
-                if (index == 0)
-                    _world.GetPool<PurchasedComponent>()
-                        .Add(business)
-                        .Value = true;
-
-                _world.GetPool<LevelComponent>()
-                    .Add(business)
-                    ;
-
-                _world.GetPool<OwnerIdComponent>()
-                    .Add(business)
-                    .Value = ownerId;
-
-                _world.GetPool<LevelUpPriceComponent>()
-                    .Add(business)
-                    .Value = 0;
-
-                _world.GetPool<IncomeСooldownComponent>()
-                    .Add(business)
-                    .Value = businessData.IncomeDelay;
-
-                if (index == 0)
-                    _world.GetPool<IncomeСooldownAvailableComponent>()
-                        .Add(business)
-                        .Value = true;
-
-                _world.GetPool<IncomeСooldownLeftComponent>()
-                    .Add(business)
-                    .Value = businessData.IncomeDelay;
-
-                _world.GetPool<IncomeComponent>()
-                    .Add(business)
-                    ;
-
-                _world.GetPool<IncomeСooldownUpComponent>()
-                    .Add(business)
-                    .Value = false;
-
-                _world.GetPool<BusinessIdComponent>()
-                    .Add(business)
-                    .Value = index;
-
-                _world.GetPool<IdComponent>()
-                    .Add(business)
-                    .Value = _identifierService.Next();
-            }
-        }
-
-        private int CreateHero()
-        {
-            int hero = _world.NewEntity();
-
-            _world.GetPool<HeroComponent>()
-                .Add(hero)
-                .Value = true;
-
-            _world.GetPool<MoneyComponent>()
-                .Add(hero)
-                .Value = 10000;
-
-            _world.GetPool<IdComponent>()
-                .Add(hero)
-                .Value = _identifierService.Next();
-
-            return hero;
         }
     }
 }

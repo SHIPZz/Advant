@@ -1,7 +1,7 @@
 ﻿using Code.Components;
 using Leopotam.EcsLite;
 
-namespace Code.Systems
+namespace Code.Systems.Money
 {
     public class CleanupMoneyRequestsSystem : IEcsInitSystem, IEcsRunSystem
     {

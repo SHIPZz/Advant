@@ -2,7 +2,7 @@
 using Leopotam.EcsLite;
 using UnityEngine;
 
-namespace Code.Systems
+namespace Code.Systems.Business
 {
     public class CalculateIncomeCooldownSystem : IEcsRunSystem, IEcsInitSystem
     {

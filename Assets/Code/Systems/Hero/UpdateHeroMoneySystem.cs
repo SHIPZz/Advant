@@ -2,7 +2,7 @@
 using Code.Gameplay.Money;
 using Leopotam.EcsLite;
 
-namespace Code.Systems
+namespace Code.Systems.Hero
 {
     public class UpdateHeroMoneySystem : IEcsInitSystem, IEcsPostRunSystem
     {

@@ -4,4 +4,9 @@
     {
         public int Value;
     }
+    
+    public struct ProgressComponent
+    {
+        public float Value;
+    }
 }

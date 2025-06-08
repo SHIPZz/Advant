@@ -7,19 +7,23 @@ using Code.Requests;
 using Code.Utils;
 using Leopotam.EcsLite;
 using UniRx;
-using UnityEngine;
 
 namespace Code.Gameplay.Business
 {
     public class BusinessService : IInitializable
     {
-        private readonly Dictionary<int, Business> _businesses = new();
-
         private readonly BusinessConfig _businessConfig;
         private readonly BusinessUpgradeNamesConfig _businessUpgradeNamesConfig;
         private readonly IMoneyService _moneyService;
         private readonly EcsWorld _ecsWorld;
         private EcsPool<UpdateBusinessRequestComponent> _updateRequestPool;
+
+        private readonly Dictionary<int, ReactiveProperty<int>> _levelProperties = new();
+        private readonly Dictionary<int, ReactiveProperty<string>> _nameProperties = new();
+        private readonly Dictionary<int, ReactiveProperty<float>> _progressProperties = new();
+        private readonly Dictionary<int, ReactiveProperty<int>> _incomeProperties = new();
+        private readonly Dictionary<int, ReactiveProperty<int>> _levelUpPriceProperties = new();
+        private readonly Dictionary<int, ReactiveProperty<bool>> _purchasedProperties = new();
 
         public BusinessService(BusinessConfig businessConfig,
             EcsWorld ecsWorld,
@@ -32,136 +36,64 @@ namespace Code.Gameplay.Business
             _businessConfig = businessConfig;
         }
 
-        public ReactiveProperty<int> GetLevelProperty(int id) => GetBusiness(id).Level;
-
-        public ReactiveProperty<string> GetNameProperty(int id) => GetBusiness(id).Name;
-
-        public ReactiveProperty<float> GetProgressProperty(int id) => GetBusiness(id).Progress;
-
-        public ReactiveProperty<int> GetIncomeProperty(int id) => GetBusiness(id).Income;
-
-        public ReactiveProperty<int> GetLevelUpPriceProperty(int id) => GetBusiness(id).LevelUpPrice;
-
-        public ReactiveProperty<bool> GetPurchasedProperty(int id) => GetBusiness(id).Purchased;
+        public ReactiveProperty<int> GetLevelProperty(int id) => GetOrCreateProperty(_levelProperties, id);
+        public ReactiveProperty<string> GetNameProperty(int id) => GetOrCreateProperty(_nameProperties, id);
+        public ReactiveProperty<float> GetProgressProperty(int id) => GetOrCreateProperty(_progressProperties, id);
+        public ReactiveProperty<int> GetIncomeProperty(int id) => GetOrCreateProperty(_incomeProperties, id);
+        public ReactiveProperty<int> GetLevelUpPriceProperty(int id) => GetOrCreateProperty(_levelUpPriceProperties, id);
+        public ReactiveProperty<bool> GetPurchasedProperty(int id) => GetOrCreateProperty(_purchasedProperties, id);
 
         public void Initialize()
         {
             _updateRequestPool = _ecsWorld.GetPool<UpdateBusinessRequestComponent>();
         }
 
-        public bool TryUpdateBusinessLevel(int id)
+        public void CreateBusinessLevelUpdateRequest(int id, int level)
         {
-            Business business = GetBusiness(id);
-            
-            int levelUpPrice = business.LevelUpPrice.Value;
+            int updateRequest = _ecsWorld.NewEntity();
 
-            if (_moneyService.TryPurchase(levelUpPrice))
-            {
-                business.Level.Value += 1;
-                business.Income.Value = GetTotalIncome(id);
-                business.Purchased.Value = true;
-                UpdateLevelUpPrice(business);
-
-                CreateUpdateRequest(id, business);
-
-                return true;
-            }
-
-            return false;
+            _updateRequestPool.Add(updateRequest).Value = new UpdateBusinessRequest(level, -1, -1, id, new UpdateModifierData(-1));
         }
-
+        
         public void UpdateBusinessProgress(int id, float progress)
         {
-            GetBusiness(id).Progress.Value = progress;
+            GetOrCreateProperty(_progressProperties, id).Value = progress;
+        }
+
+        public void NotifyBusinessDataUpdated(int id, int level, int income, int levelUpPrice)
+        {
+            if (level > -1)
+                GetOrCreateProperty(_levelProperties, id).Value = level;
+            
+            if(level > 0)
+                GetOrCreateProperty(_purchasedProperties, id).Value = true;
+            
+            if (income > -1)
+                GetOrCreateProperty(_incomeProperties, id).Value = income;
+            
+            if (levelUpPrice > -1)
+                GetOrCreateProperty(_levelUpPriceProperties, id).Value = levelUpPrice;
         }
 
         public bool TryPurchaseUpgrade(int id, int upgradeId, int price)
         {
-            Business business = GetBusiness(id);
-
             if (!_moneyService.TryPurchase(price))
                 return false;
 
-            business.Upgrades[upgradeId].Purchased = true;
-            business.Income.Value = GetTotalIncome(id);
-            CreateUpdateRequest(id,business);
+            int updateRequest = _ecsWorld.NewEntity();
+
+            _updateRequestPool.Add(updateRequest).Value = new UpdateBusinessRequest(-1, -1, -1, id, new UpdateModifierData(upgradeId));
+            
             return true;
         }
 
-        public int GetTotalIncome(int businessId)
+        private ReactiveProperty<T> GetOrCreateProperty<T>(Dictionary<int, ReactiveProperty<T>> properties, int id)
         {
-            Business business = GetBusiness(businessId);
-
-            int level = business.Level.Value;
-
-            UpgradeData firstUpgrade = business.Upgrades[0];
-            UpgradeData secondUpgrade = business.Upgrades[1];
-            
-            float firstModifier = firstUpgrade.Purchased ? firstUpgrade.IncomeMultiplier : 0;
-            float secondModifier = secondUpgrade.Purchased ? secondUpgrade.IncomeMultiplier : 0;
-
-            float totalIncome = BusinessCalculator.CalculateIncome(
-                level,
-                business.BaseIncome.Value,
-                firstModifier,
-                secondModifier
-            );
-
-            Debug.Log($"{totalIncome}");
-            
-            return Mathf.RoundToInt(totalIncome);
-        }
-
-        private Business GetBusiness(int id)
-        {
-            if (!_businesses.ContainsKey(id))
+            if (!properties.ContainsKey(id))
             {
-                CreateBusiness(id);
+                properties[id] = new ReactiveProperty<T>();
             }
-
-            return _businesses[id];
-        }
-
-        private Business CreateBusiness(int id)
-        {
-            Business business = new Business(id);
-
-            IReadOnlyList<BusinessData> datas = _businessConfig.GetBusinessDatas();
-            BusinessData businessData = datas[id];
-
-            if (id == 0)
-            {
-                business.Level.Value = 1;
-                business.Purchased.Value = true;
-            }
-
-            BusinessUpgradeNameData businessUpgradeNameData = _businessUpgradeNamesConfig.BusinessUpgradeNameDatas[id];
-
-            business.Name.Value = businessUpgradeNameData.Name;
-            business.BaseIncome.Value = businessData.BaseIncome;
-            business.Income.Value = businessData.BaseIncome;
-
-            foreach (UpgradeData upgradeData in businessData.Upgrades)
-                business.Upgrades.Add(upgradeData);
-
-            UpdateLevelUpPrice(business);
-
-            business.SetUpgradeNames(businessUpgradeNameData.UpgradeNames);
-
-            return _businesses[id] = business;
-        }
-
-        private static void UpdateLevelUpPrice(Business business)
-        {
-            business.LevelUpPrice.Value = BusinessCalculator.CalculateLevelUpPrice(business.Level.Value, business.BaseIncome.Value);
-        }
-
-        private void CreateUpdateRequest(int id, Business business)
-        {
-            int updateRequest = _ecsWorld.NewEntity();
-
-            _updateRequestPool.Add(updateRequest)
-                .Value = new UpdateBusinessRequest(business.Level.Value, business.LevelUpPrice.Value, business.Income.Value,id);
+            return properties[id];
         }
     }
 }

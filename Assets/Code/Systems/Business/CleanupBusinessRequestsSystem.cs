@@ -1,7 +1,7 @@
 ﻿using Code.Components;
 using Leopotam.EcsLite;
 
-namespace Code.Systems
+namespace Code.Systems.Business
 {
     public class CleanupBusinessRequestsSystem : IEcsInitSystem, IEcsRunSystem
     {

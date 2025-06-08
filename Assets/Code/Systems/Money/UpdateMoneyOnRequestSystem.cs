@@ -1,10 +1,9 @@
 ﻿using Code.Components;
-using Code.Configs;
 using Code.Requests;
 using Leopotam.EcsLite;
 using UnityEngine;
 
-namespace Code.Systems
+namespace Code.Systems.Money
 {
     public class UpdateMoneyOnRequestSystem : IEcsInitSystem, IEcsRunSystem
     {

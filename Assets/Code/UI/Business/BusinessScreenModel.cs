@@ -27,7 +27,7 @@ namespace Code.UI.Business
         
         public void OnLevelUpButtonClicked()
         {
-            _businessService.TryUpdateBusinessLevel(_businessId);
+            _businessService.CreateBusinessLevelUpdateRequest(_businessId,1);
         }
     }
 }
