@@ -120,7 +120,7 @@ namespace Code.Systems.Business
                 modifiers.Value = new List<UpgradeData>(businessData.Upgrades.ToList());
 
                 _businessService.NotifyBusinessDataUpdated(businessId.Value, level.Value, income.Value,
-                    levelUpPricePool.Get(entity).Value);
+                    levelUpPricePool.Get(entity).Value, name.Value);
             }
         }
     }

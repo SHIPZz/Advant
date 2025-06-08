@@ -30,6 +30,7 @@ namespace Code.Systems.Business
         private EcsPool<UpdateBusinessModifiersComponent> _updateBusinessModifiersPool;
         private EcsPool<BaseIncomeComponent> _baseIncomePool;
         private EcsPool<BaseCostComponent> _baseCostPool;
+        private EcsPool<NameComponent> _namePool;
 
         public UpdateBusinessOnRequestSystem(BusinessService businessService, IMoneyService moneyService)
         {
@@ -64,6 +65,7 @@ namespace Code.Systems.Business
             _purchasedPool = _world.GetPool<PurchasedComponent>();
             _incomeCooldownAvailablePool = _world.GetPool<IncomeСooldownAvailableComponent>();
             _levelUpPricePool = _world.GetPool<LevelUpPriceComponent>();
+            _namePool = _world.GetPool<NameComponent>();
         }
 
         public void Run(IEcsSystems systems)
@@ -92,35 +94,38 @@ namespace Code.Systems.Business
             {
                 UpgradeData upgradeData = upgradeDatas[upgradeRequest.UpdateModifierData.Id];
 
-                if (!upgradeData.Purchased) 
+                if (!upgradeData.Purchased)
                     upgradeData.Purchased = _moneyService.TryPurchase(upgradeData.Cost);
             }
-
-            if (!_moneyService.TryPurchase(levelUpPrice))
-                return;
-
+            
             ref int level = ref _levelPool.Get(business).Value;
             ref int income = ref _incomePool.Get(business).Value;
             int baseIncome = _baseIncomePool.Get(business).Value;
             int baseCost = _baseCostPool.Get(business).Value;
-            
-            if (upgradeRequest.Level > -1)
-            {
+
+            if (upgradeRequest.Level > -1) 
                 level += upgradeRequest.Level;
 
-                levelUpPrice = BusinessCalculator.CalculateLevelUpPrice(level, baseCost);
-
-                float firstModifier = upgradeDatas[0].Purchased ? upgradeDatas[0].IncomeMultiplier : 0;
-                float secondModifier = upgradeDatas[1].Purchased ? upgradeDatas[1].IncomeMultiplier : 0;
-
-                income = Mathf.RoundToInt(BusinessCalculator.CalculateIncome(level, baseIncome, firstModifier, secondModifier));
-            }
+            income = CalculateNewIncome(upgradeDatas, level, baseIncome);
+            levelUpPrice = BusinessCalculator.CalculateLevelUpPrice(level, baseCost);
 
             MarkPurchasedIfNot(business);
 
             MarkIncomeCooldownAvailableIfNot(business);
 
-            _businessService.NotifyBusinessDataUpdated(businessId, level, income, levelUpPrice);
+            string name = _namePool.Get(business).Value;
+
+            _businessService.NotifyBusinessDataUpdated(businessId, level, income, levelUpPrice,name);
+        }
+
+        private static int CalculateNewIncome(List<UpgradeData> upgradeDatas, int level, int baseIncome)
+        {
+            float firstModifier = upgradeDatas[0].Purchased ? upgradeDatas[0].IncomeMultiplier : 0;
+            float secondModifier = upgradeDatas[1].Purchased ? upgradeDatas[1].IncomeMultiplier : 0;
+
+            var income =
+                Mathf.RoundToInt(BusinessCalculator.CalculateIncome(level, baseIncome, firstModifier, secondModifier));
+            return income;
         }
 
         private void MarkIncomeCooldownAvailableIfNot(int business)
