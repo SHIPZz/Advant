@@ -1,35 +1,61 @@
-﻿using Code.Gameplay.Business;
+﻿using System;
+using Code.Gameplay.Business;
 using UniRx;
 
-namespace Code.UI.Business
+namespace Code.UI
 {
-    public class UpgradeBusinessScreenModel
+    public class UpgradeBusinessScreenModel : IUIModel
     {
-        public readonly ReactiveProperty<bool> Purchased;
-        public readonly ReactiveProperty<float> IncomeMultiplier;
-        public readonly ReactiveProperty<int> Price;
-        public readonly ReactiveProperty<string> Name;
-        public readonly ReactiveProperty<int> Id;
-        public readonly ReactiveProperty<int> BusinessId;
         private readonly BusinessService _businessService;
+        private readonly ReactiveProperty<bool> _purchased;
+        private readonly ReactiveProperty<float> _incomeMultiplier;
+        private readonly ReactiveProperty<int> _price;
+        private readonly ReactiveProperty<string> _name;
+        private readonly ReactiveProperty<int> _id;
+        private readonly ReactiveProperty<int> _businessId;
+        private IDisposable _modifierSubscription;
 
-        public IReadOnlyReactiveProperty<bool> PurchaseAvailable => _businessService.GetPurchasedProperty(BusinessId.Value);
-        public IReadOnlyReactiveProperty<bool> UpgradeState => _businessService.GetUpgradeProperty(BusinessId.Value, Id.Value);
-
+        public IReadOnlyReactiveProperty<bool> Purchased => _purchased;
+        public IReadOnlyReactiveProperty<float> IncomeMultiplier => _incomeMultiplier;
+        public IReadOnlyReactiveProperty<int> Price => _price;
+        public IReadOnlyReactiveProperty<string> Name => _name;
+        public IReadOnlyReactiveProperty<bool> PurchaseAvailable => _businessService.GetPurchasedProperty(_businessId.Value);
+        
         public UpgradeBusinessScreenModel(bool purchased, float income, int price, string name, int id, int businessId, BusinessService businessService)
         {
             _businessService = businessService;
-            Purchased = new ReactiveProperty<bool>(purchased);
-            IncomeMultiplier = new ReactiveProperty<float>(income);
-            Price = new ReactiveProperty<int>(price);
-            Name = new ReactiveProperty<string>(name);
-            Id = new ReactiveProperty<int>(id);
-            BusinessId = new ReactiveProperty<int>(businessId);
+            _purchased = new ReactiveProperty<bool>(purchased);
+            _incomeMultiplier = new ReactiveProperty<float>(income);
+            _price = new ReactiveProperty<int>(price);
+            _name = new ReactiveProperty<string>(name);
+            _id = new ReactiveProperty<int>(id);
+            _businessId = new ReactiveProperty<int>(businessId);
+        }
+
+        public void Initialize()
+        {
+            _modifierSubscription = _businessService.BusinessModifierStateChanged
+                .Where(modifier => modifier.Item1 == _businessId.Value && modifier.Item2 == _id.Value)
+                .Subscribe(modifer => _purchased.Value = modifer.Item3);
         }
 
         public void OnUpgradeClicked()
         {
-            Purchased.Value = _businessService.TryPurchaseUpgrade(BusinessId.Value, Id.Value, Price.Value);
+            if (_businessService.TryPurchaseUpgrade(_businessId.Value, _id.Value, _price.Value))
+            {
+                _purchased.Value = true;
+            }
+        }
+
+        public void Dispose()
+        {
+            _modifierSubscription?.Dispose();
+            _purchased?.Dispose();
+            _incomeMultiplier?.Dispose();
+            _price?.Dispose();
+            _name?.Dispose();
+            _id?.Dispose();
+            _businessId?.Dispose();
         }
     }
 }

@@ -4,7 +4,7 @@ using UniRx;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Code.UI.Business
+namespace Code.UI
 {
     public class BusinessView : MonoBehaviour
     {

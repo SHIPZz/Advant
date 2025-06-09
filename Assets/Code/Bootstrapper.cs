@@ -7,7 +7,7 @@ using Code.Gameplay.Hero.Features;
 using Code.Gameplay.Money;
 using Code.Gameplay.Money.Features;
 using Code.Gameplay.Save;
-using Code.UI.Business;
+using Code.UI;
 using Code.UI.Money;
 using Leopotam.EcsLite;
 using UnityEngine;
@@ -20,6 +20,8 @@ namespace Code
         [SerializeField] private Transform _businessUIParent;
         [SerializeField] private MoneyView _moneyView;
 
+        private readonly List<IUIModel> _uiModels = new(10);
+        
         private EcsWorld _world;
         private IEcsSystems _systems;
         private IIdentifierService _identifierService;
@@ -67,6 +69,7 @@ namespace Code
             _systems = null;
             _world?.Destroy();
             _world = null;
+            _uiModels.ForEach(x => x.Dispose());
         }
 
         private void InitFeatures(BusinessService businessService, IMoneyService heroMoneyService,
@@ -103,15 +106,15 @@ namespace Code
 
                 BusinessData businessData = businessDatas[i];
 
-                List<UpgradeBusinessScreenModel> upgradeBusinessScreenModels =
-                    CreateUpgradeScreenModels(businessUpgradeNamesConfig, i, businessData, businessService);
+               var upgradeBusinessScreenModels = CreateUpgradeScreenModels(businessUpgradeNamesConfig, i, businessData, businessService);
 
-                businessView.Initialize(new BusinessScreenModel(businessService, lastBusinessId++,
-                    upgradeBusinessScreenModels));
+               _uiModels.AddRange(upgradeBusinessScreenModels);
+               
+                businessView.Initialize(new BusinessScreenModel(businessService, lastBusinessId++, upgradeBusinessScreenModels));
             }
         }
 
-        private static List<UpgradeBusinessScreenModel> CreateUpgradeScreenModels(
+        private List<UpgradeBusinessScreenModel> CreateUpgradeScreenModels(
             BusinessUpgradeNamesConfig businessUpgradeNamesConfig, int businessId, BusinessData businessData,
             BusinessService businessService)
         {
@@ -127,9 +130,10 @@ namespace Code
                 int cost = businessData.Upgrades[i].Cost;
                 float incomeMultiplier = businessData.Upgrades[i].IncomeMultiplier;
 
-                UpgradeBusinessScreenModel upgradeBusinessScreenModel = new(purchased, incomeMultiplier, cost,
-                    targetName, i, businessId, businessService);
+                UpgradeBusinessScreenModel upgradeBusinessScreenModel = new(purchased, incomeMultiplier, cost, targetName, i, businessId, businessService);
+                upgradeBusinessScreenModel.Initialize();
                 upgradeBusinessScreenModels.Add(upgradeBusinessScreenModel);
+                _uiModels.Add(upgradeBusinessScreenModel);
             }
 
             return upgradeBusinessScreenModels;

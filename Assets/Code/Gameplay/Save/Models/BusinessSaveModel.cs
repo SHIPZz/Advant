@@ -21,6 +21,7 @@ namespace Code.Gameplay.Save.Models
     public class UpgradeSaveModel
     {
         public int Id;
-        public bool IsPurchased;
+        public float IncomeModifier;
+        public bool Purchased;
     }
 } 

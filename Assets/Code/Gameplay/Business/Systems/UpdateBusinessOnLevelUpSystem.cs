@@ -1,5 +1,7 @@
+using System.Collections.Generic;
 using Code.Common.Components;
 using Code.Gameplay.Business.Components;
+using Code.Gameplay.Business.Configs;
 using Code.Gameplay.Business.Requests;
 using Leopotam.EcsLite;
 
@@ -16,6 +18,7 @@ namespace Code.Gameplay.Business.Systems
         private EcsPool<LevelComponent> _levelPool;
         private EcsPool<PurchasedComponent> _purchasedPool;
         private EcsPool<IncomeСooldownAvailableComponent> _incomeCooldownAvailablePool;
+        private EcsPool<AccumulatedModifierComponent> _accumulatedModifierComponent;
 
         public void Init(IEcsSystems systems)
         {
@@ -40,6 +43,8 @@ namespace Code.Gameplay.Business.Systems
 
                     UpdateBusinessLevel(business, request.Level);
                     UpdateBusinessState(business);
+
+                   ResetUpgradeModifiers(business);
                 }
             }
         }
@@ -48,6 +53,16 @@ namespace Code.Gameplay.Business.Systems
         {
             int businessId = _businessIdPool.Get(business).Value;
             return request.BusinessId == businessId;
+        }
+
+        private void ResetUpgradeModifiers(int business)
+        {
+            ref List<AccumulatedModifiersData> accumulatedModifiersDatas = ref _accumulatedModifierComponent.Get(business).Value;
+
+            foreach (AccumulatedModifiersData accumulatedModifiersData in accumulatedModifiersDatas)
+            {
+                accumulatedModifiersData.Purchased = false;
+            }
         }
 
         private void UpdateBusinessLevel(int business, int level)
@@ -105,6 +120,7 @@ namespace Code.Gameplay.Business.Systems
         {
             _businessIdPool = _world.GetPool<BusinessIdComponent>();
             _levelUpRequestPool = _world.GetPool<LevelUpRequestComponent>();
+            _accumulatedModifierComponent = _world.GetPool<AccumulatedModifierComponent>();
             _levelPool = _world.GetPool<LevelComponent>();
             _purchasedPool = _world.GetPool<PurchasedComponent>();
             _incomeCooldownAvailablePool = _world.GetPool<IncomeСooldownAvailableComponent>();

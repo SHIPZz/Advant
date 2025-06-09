@@ -1,7 +1,6 @@
-using System.Collections.Generic;
 using Code.Common.Components;
 using Code.Gameplay.Business.Components;
-using Code.Gameplay.Business.Configs;
+using Code.Gameplay.Business.Utils;
 using Code.Utils;
 using Leopotam.EcsLite;
 using UnityEngine;
@@ -14,7 +13,7 @@ namespace Code.Gameplay.Business.Systems
         private EcsFilter _businesses;
         
         private EcsPool<IncomeСooldownUpComponent> _cooldownUpPool;
-        private EcsPool<UpdateBusinessModifiersComponent> _updateBusinessModifiersPool;
+        private EcsPool<AccumulatedModifierComponent> _accumulatedModifiersPool;
         private EcsPool<LevelComponent> _levelPool;
         private EcsPool<BaseIncomeComponent> _baseIncomePool;
         private EcsPool<TotalIncomeComponent> _totalIncomePool;
@@ -46,10 +45,10 @@ namespace Code.Gameplay.Business.Systems
         {
             var level = _levelPool.Get(business).Value;
             var baseIncome = _baseIncomePool.Get(business).Value;
-            var modifiers = _updateBusinessModifiersPool.Get(business).Value;
+            var modifiers = _accumulatedModifiersPool.Get(business).Value;
 
-            var (firstModifier, secondModifier) = GetIncomeModifiers(modifiers);
-            
+            var (firstModifier, secondModifier) = BusinessModifierUtils.GetModifiers(modifiers);
+
             var totalIncome = Mathf.RoundToInt(BusinessCalculator.CalculateIncome(
                 level,
                 baseIncome,
@@ -59,14 +58,6 @@ namespace Code.Gameplay.Business.Systems
             _totalIncomePool.Get(business).Value = totalIncome;
         }
 
-        private (float firstModifier, float secondModifier) GetIncomeModifiers(List<UpgradeData> modifiers)
-        {
-            float firstModifier = modifiers[0].Purchased ? modifiers[0].IncomeMultiplier : 0f;
-            float secondModifier = modifiers[1].Purchased ? modifiers[1].IncomeMultiplier : 0f;
-            
-            return (firstModifier, secondModifier);
-        }
-
         private void InitializeFilters()
         {
             _businesses = _world.Filter<IncomeСooldownLeftComponent>()
@@ -74,6 +65,7 @@ namespace Code.Gameplay.Business.Systems
                 .Inc<IncomeСooldownUpComponent>()
                 .Inc<PurchasedComponent>()
                 .Inc<BusinessComponent>()
+                .Inc<AccumulatedModifierComponent>()
                 .Inc<BaseIncomeComponent>()
                 .Inc<UpdateBusinessModifiersComponent>()
                 .Inc<IdComponent>()
@@ -83,7 +75,7 @@ namespace Code.Gameplay.Business.Systems
         private void InitializePools()
         {
             _cooldownUpPool = _world.GetPool<IncomeСooldownUpComponent>();
-            _updateBusinessModifiersPool = _world.GetPool<UpdateBusinessModifiersComponent>();
+            _accumulatedModifiersPool = _world.GetPool<AccumulatedModifierComponent>();
             _levelPool = _world.GetPool<LevelComponent>();
             _baseIncomePool = _world.GetPool<BaseIncomeComponent>();
             _totalIncomePool = _world.GetPool<TotalIncomeComponent>();

@@ -1,5 +1,7 @@
+using System.Collections.Generic;
 using Code.Common.Components;
 using Code.Gameplay.Business.Components;
+using Code.Gameplay.Business.Configs;
 using Code.Gameplay.Hero.Components;
 using Code.Gameplay.Money.Components;
 using Code.Gameplay.Save.Components;
@@ -12,11 +14,11 @@ namespace Code.Gameplay.Save.Systems
     {
         private readonly ISaveService _saveService;
         private EcsWorld _world;
-        
+
         private EcsFilter _heroFilter;
         private EcsFilter _businessFilter;
         private EcsFilter _saveRequestFilter;
-        
+
         private EcsPool<MoneyComponent> _moneyPool;
         private EcsPool<LevelComponent> _levelPool;
         private EcsPool<BusinessIdComponent> _businessIdPool;
@@ -26,7 +28,7 @@ namespace Code.Gameplay.Save.Systems
         private EcsPool<LevelUpPriceComponent> _levelUpPricePool;
         private EcsPool<PurchasedComponent> _purchasedPool;
         private EcsPool<IncomeСooldownAvailableComponent> _cooldownAvailablePool;
-        private EcsPool<UpdateBusinessModifiersComponent> _updateBusinessModifiersPool;
+        private EcsPool<AccumulatedModifierComponent> _accumulatedModifierComponent;
         private EcsPool<IncomeСooldownComponent> _cooldownPool;
 
         public SaveOnRequestSystem(ISaveService saveService)
@@ -37,11 +39,11 @@ namespace Code.Gameplay.Save.Systems
         public void Init(IEcsSystems systems)
         {
             _world = systems.GetWorld();
-            
+
             _heroFilter = _world.Filter<HeroComponent>().End();
             _businessFilter = _world.Filter<BusinessIdComponent>().End();
             _saveRequestFilter = _world.Filter<SaveRequestComponent>().End();
-            
+
             _moneyPool = _world.GetPool<MoneyComponent>();
             _levelPool = _world.GetPool<LevelComponent>();
             _businessIdPool = _world.GetPool<BusinessIdComponent>();
@@ -51,7 +53,7 @@ namespace Code.Gameplay.Save.Systems
             _levelUpPricePool = _world.GetPool<LevelUpPriceComponent>();
             _purchasedPool = _world.GetPool<PurchasedComponent>();
             _cooldownAvailablePool = _world.GetPool<IncomeСooldownAvailableComponent>();
-            _updateBusinessModifiersPool = _world.GetPool<UpdateBusinessModifiersComponent>();
+            _accumulatedModifierComponent = _world.GetPool<AccumulatedModifierComponent>();
             _cooldownPool = _world.GetPool<IncomeСooldownComponent>();
         }
 
@@ -95,19 +97,28 @@ namespace Code.Gameplay.Save.Systems
                     Income = _incomePool.Get(business).Value,
                     LevelUpPrice = _levelUpPricePool.Get(business).Value,
                     IsPurchased = _purchasedPool.Has(business) && _purchasedPool.Get(business).Value,
-                    IsCooldownAvailable = _cooldownAvailablePool.Has(business) && _cooldownAvailablePool.Get(business).Value
+                    IsCooldownAvailable = _cooldownAvailablePool.Has(business) &&
+                                          _cooldownAvailablePool.Get(business).Value
                 };
 
-                if (_updateBusinessModifiersPool.Has(business))
+                if (_accumulatedModifierComponent.Has(business))
                 {
-                    var upgradeDatas = _updateBusinessModifiersPool.Get(business).Value;
-                    for (int i = 0; i < upgradeDatas.Count; i++)
+                    List<AccumulatedModifiersData> accumulatedModifiersDatas =
+                        _accumulatedModifierComponent.Get(business).Value;
+
+                    for (int i = 0; i < accumulatedModifiersDatas.Count; i++)
                     {
-                        businessSave.Upgrades.Add(new UpgradeSaveModel
+                        if (accumulatedModifiersDatas[i].Value > 0)
                         {
-                            Id = i,
-                            IsPurchased = upgradeDatas[i].Purchased
-                        });
+                            var saveModel = new UpgradeSaveModel()
+                            {
+                                Id = accumulatedModifiersDatas[i].Id,
+                                IncomeModifier = accumulatedModifiersDatas[i].Value,
+                                Purchased = accumulatedModifiersDatas[i].Purchased
+                            };
+
+                            businessSave.Upgrades.Add(saveModel);
+                        }
                     }
                 }
 
@@ -123,4 +134,4 @@ namespace Code.Gameplay.Save.Systems
             }
         }
     }
-} 
+}

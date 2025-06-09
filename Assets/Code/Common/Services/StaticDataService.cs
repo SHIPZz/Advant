@@ -1,6 +1,6 @@
 using Code.Constants;
 using Code.Gameplay.Business.Configs;
-using Code.UI.Business;
+using Code.UI;
 using UnityEngine;
 
 namespace Code.Common.Services

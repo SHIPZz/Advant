@@ -2,9 +2,9 @@ using System.Collections.Generic;
 using Code.Gameplay.Business;
 using UniRx;
 
-namespace Code.UI.Business
+namespace Code.UI
 {
-    public class BusinessScreenModel
+    public class BusinessScreenModel : IUIModel
     {
         private readonly BusinessService _businessService;
         private readonly int _businessId;
@@ -28,6 +28,11 @@ namespace Code.UI.Business
         public void OnLevelUpButtonClicked()
         {
             _businessService.TryPurchaseLevelUp(_businessId, LevelUpPrice.Value,1);
+        }
+
+        public void Dispose()
+        {
+            _upgradeBusinessScreenModels?.Dispose();
         }
     }
 }

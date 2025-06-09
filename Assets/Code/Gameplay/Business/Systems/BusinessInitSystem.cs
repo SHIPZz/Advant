@@ -30,7 +30,7 @@ namespace Code.Gameplay.Business.Systems
         private EcsPool<IncomeСooldownLeftComponent> _cooldownLeftPool;
         private EcsPool<IncomeСooldownAvailableComponent> _cooldownAvailablePool;
         private EcsPool<PurchasedComponent> _purchasedPool;
-        private EcsPool<UpdateBusinessModifiersComponent> _updateBusinessModifiersPool;
+        private EcsPool<AccumulatedModifierComponent> _accumulatedModifiersPool;
 
         public BusinessInitSystem(
             BusinessUpgradeNamesConfig businessUpgradeNamesConfig,
@@ -115,18 +115,20 @@ namespace Code.Gameplay.Business.Systems
 
         private void RestoreUpgrades(int entity, BusinessSaveModel savedBusiness)
         {
-            if (!_updateBusinessModifiersPool.Has(entity))
+            if (!_accumulatedModifiersPool.Has(entity))
                 return;
 
-            ref List<UpgradeData> upgradeDatas = ref _updateBusinessModifiersPool.Get(entity).Value;
+            ref List<AccumulatedModifiersData> accumulatedModifiers = ref _accumulatedModifiersPool.Get(entity).Value;
+            accumulatedModifiers.Clear();
 
             foreach (UpgradeSaveModel savedUpgrade in savedBusiness.Upgrades)
             {
-                if (savedUpgrade.Id < upgradeDatas.Count)
+                accumulatedModifiers.Add(new AccumulatedModifiersData
                 {
-                    UpgradeData upgradeData = upgradeDatas[savedUpgrade.Id];
-                    upgradeData.Purchased = savedUpgrade.IsPurchased;
-                }
+                    Id = savedUpgrade.Id,
+                    Value = savedUpgrade.IncomeModifier,
+                    Purchased = savedUpgrade.Purchased
+                });
             }
         }
 
@@ -141,7 +143,7 @@ namespace Code.Gameplay.Business.Systems
             _cooldownLeftPool = world.GetPool<IncomeСooldownLeftComponent>();
             _cooldownAvailablePool = world.GetPool<IncomeСooldownAvailableComponent>();
             _purchasedPool = world.GetPool<PurchasedComponent>();
-            _updateBusinessModifiersPool = world.GetPool<UpdateBusinessModifiersComponent>();
+            _accumulatedModifiersPool = world.GetPool<AccumulatedModifierComponent>();
         }
 
         private int GetHeroId(EcsWorld world)
@@ -160,19 +162,9 @@ namespace Code.Gameplay.Business.Systems
             var level = _levelPool.Get(entity).Value;
             var income = _incomePool.Get(entity).Value;
             var levelUpPrice = _levelUpPricePool.Get(entity).Value;
-
-            Dictionary<int, bool> upgrades = null;
-
-            if (_updateBusinessModifiersPool.Has(entity))
-            {
-                List<UpgradeData> upgradeDatas = _updateBusinessModifiersPool.Get(entity).Value;
-                upgrades = new Dictionary<int, bool>();
-
-                for (int i = 0; i < upgradeDatas.Count; i++)
-                    upgrades[i] = upgradeDatas[i].Purchased;
-            }
-
-            _businessService.NotifyBusinessDataUpdated(businessId, level, income, levelUpPrice, name, upgrades);
+            var accumulatedModifiersDatas = _accumulatedModifiersPool.Get(entity).Value;
+            
+            _businessService.NotifyBusinessDataUpdated(businessId, level, income, levelUpPrice, name,  accumulatedModifiersDatas);
         }
     }
 }

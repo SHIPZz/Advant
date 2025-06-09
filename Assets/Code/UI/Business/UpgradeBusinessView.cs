@@ -4,7 +4,7 @@ using UniRx;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Code.UI.Business
+namespace Code.UI
 {
     public class UpgradeBusinessView : MonoBehaviour
     {
@@ -22,14 +22,10 @@ namespace Code.UI.Business
             model.Purchased
                 .Subscribe(SetupAfterPurchasing)
                 .AddTo(this);
-            
-            model.PurchaseAvailable.CombineLatest(model.Purchased,
-                (purchasingAvailable, isPurchased) => purchasingAvailable && !isPurchased)
-                .Subscribe(isInteractable => _upgradeButton.interactable = isInteractable)
-                .AddTo(this);
 
-            model.UpgradeState
-                .Subscribe(SetupAfterPurchasing)
+            model.PurchaseAvailable.CombineLatest(model.Purchased,
+                (purchaseAvailable, isPurchased) => purchaseAvailable && !isPurchased)
+                .Subscribe(isInteractable => _upgradeButton.interactable = isInteractable)
                 .AddTo(this);
 
             if (_priceText.gameObject.activeSelf)
@@ -42,6 +38,9 @@ namespace Code.UI.Business
 
         private void SetupAfterPurchasing(bool purchased)
         {
+            if(purchased)
+                _upgradeButton.interactable = false;
+
             _priceText.gameObject.SetActive(!purchased);
             _purchasedText.gameObject.SetActive(purchased);
         }

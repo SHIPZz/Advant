@@ -1,5 +1,5 @@
 using Code.Gameplay.Business.Configs;
-using Code.UI.Business;
+using Code.UI;
 
 namespace Code.Common.Services
 {

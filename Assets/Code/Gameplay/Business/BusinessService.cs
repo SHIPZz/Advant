@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Code.Common;
+using Code.Gameplay.Business.Configs;
 using Code.Gameplay.Money;
 using Leopotam.EcsLite;
 using UniRx;
@@ -28,7 +29,7 @@ namespace Code.Gameplay.Business
         public IReadOnlyReactiveProperty<int> GetIncomeProperty(int id) => _properties.GetIncomeProperty(id);
         public IReadOnlyReactiveProperty<int> GetLevelUpPriceProperty(int id) => _properties.GetLevelUpPriceProperty(id);
         public IReadOnlyReactiveProperty<bool> GetPurchasedProperty(int id) => _properties.GetPurchasedProperty(id);
-        public IReadOnlyReactiveProperty<bool> GetUpgradeProperty(int businessId, int upgradeId) => _properties.GetUpgradeProperty(businessId, upgradeId);
+        public IReadOnlyReactiveProperty<(int,int, bool)> BusinessModifierStateChanged => _properties.BusinessModifierStateChanged;
 
         public bool TryPurchaseLevelUp(int id, int levelPrice, int level)
         {
@@ -40,7 +41,7 @@ namespace Code.Gameplay.Business
             _properties.UpdateProgress(id, progress);
         }
 
-        public void NotifyBusinessDataUpdated(int id, int level, int income, int levelUpPrice, string name, Dictionary<int, bool> upgrades = null)
+        public void NotifyBusinessDataUpdated(int id, int level, int income, int levelUpPrice, string name, List<AccumulatedModifiersData> upgrades = null)
         {
             _properties.UpdateBusinessData(id, level, income, levelUpPrice, name, upgrades);
         }

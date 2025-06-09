@@ -14,8 +14,8 @@ namespace Code.Gameplay.Business.Systems
         private EcsPool<IncomeСooldownUpComponent> _cooldownUpPool;
         private EcsPool<MoneyUpdateRequestComponent> _moneyUpdateRequestPool;
         private EcsPool<OwnerIdComponent> _ownerIdPool;
-        private EcsPool<TotalIncomeComponent> _totalIncomePool;
-        
+        private EcsPool<IncomeComponent> _incomePool;
+
         public void Init(IEcsSystems systems)
         {
             _world = systems.GetWorld();
@@ -42,7 +42,7 @@ namespace Code.Gameplay.Business.Systems
         private void CreateMoneyUpdateRequest(int business)
         {
             var ownerId = _ownerIdPool.Get(business).Value;
-            var totalIncome = _totalIncomePool.Get(business).Value;
+            var totalIncome = _incomePool.Get(business).Value;
             
             CreateNewMoneyUpdateRequest(ownerId, totalIncome);
         }
@@ -72,7 +72,7 @@ namespace Code.Gameplay.Business.Systems
             _cooldownUpPool = _world.GetPool<IncomeСooldownUpComponent>();
             _ownerIdPool = _world.GetPool<OwnerIdComponent>();
             _moneyUpdateRequestPool = _world.GetPool<MoneyUpdateRequestComponent>();
-            _totalIncomePool = _world.GetPool<TotalIncomeComponent>();
+            _incomePool = _world.GetPool<IncomeComponent>();
         }
     }
 }

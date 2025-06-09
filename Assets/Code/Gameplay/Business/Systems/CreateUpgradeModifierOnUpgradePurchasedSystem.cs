@@ -1,10 +1,11 @@
 using Code.Common.Components;
 using Code.Gameplay.Business.Components;
+using Code.Gameplay.Business.Configs;
 using Leopotam.EcsLite;
 
 namespace Code.Gameplay.Business.Systems
 {
-    public class UpdateBusinessOnUpgradePurchasedSystem : IEcsInitSystem, IEcsRunSystem
+    public class CreateUpgradeModifierOnUpgradePurchasedSystem : IEcsInitSystem, IEcsRunSystem
     {
         private EcsWorld _world;
         private EcsFilter _businesses;
@@ -13,6 +14,11 @@ namespace Code.Gameplay.Business.Systems
         private EcsPool<BusinessIdComponent> _businessIdPool;
         private EcsPool<UpgradePurchasedRequestComponent> _upgradeRequestPool;
         private EcsPool<UpdateBusinessModifiersComponent> _updateBusinessModifiersPool;
+        private EcsPool<PurchasedComponent> _purchasedPool;
+        private EcsPool<OwnerIdComponent> _ownerIdPool;
+        private EcsPool<UpgradeModifierComponent> _upgradeModifierPool;
+        private EcsPool<IdComponent> _idPool;
+        private EcsPool<UpgradeModifierIdComponent> _upgradeModifierIdPool;
 
         public void Init(IEcsSystems systems)
         {
@@ -32,7 +38,16 @@ namespace Code.Gameplay.Business.Systems
                     if (!IsMatchingBusiness(business, upgradeRequest.BusinessId))
                         continue;
 
-                    ProcessUpgradeModifier(business, upgradeRequest.UpgradeId);
+                    ref var upgradeDatas = ref _updateBusinessModifiersPool.Get(business).Value;
+
+                    UpgradeData upgradeData = upgradeDatas[upgradeRequest.UpgradeId];
+            
+                    var upgradeEntity = _world.NewEntity();
+
+                    _purchasedPool.Add(upgradeEntity).Value = true;
+                    _upgradeModifierPool.Add(upgradeEntity).Value = upgradeData.IncomeMultiplier;
+                    _ownerIdPool.Add(upgradeEntity).Value = _idPool.Get(business).Value;
+                    _upgradeModifierIdPool.Add(upgradeEntity).Value = upgradeRequest.UpgradeId;
                 }
             }
         }
@@ -42,18 +57,12 @@ namespace Code.Gameplay.Business.Systems
             return _businessIdPool.Get(business).Value == businessId;
         }
 
-        private void ProcessUpgradeModifier(int business, int upgradeId)
-        {
-            ref var upgradeDatas = ref _updateBusinessModifiersPool.Get(business).Value;
-            var upgradeData = upgradeDatas[upgradeId];
-            upgradeData.Purchased = true;
-        }
-
         private void InitializeFilters()
         {
             _businesses = _world.Filter<BusinessComponent>()
                 .Inc<BusinessIdComponent>()
                 .Inc<UpdateBusinessModifiersComponent>()
+                .Inc<AccumulatedModifierComponent>()
                 .Inc<NameComponent>()
                 .End();
 
@@ -63,6 +72,11 @@ namespace Code.Gameplay.Business.Systems
         private void InitializePools()
         {
             _businessIdPool = _world.GetPool<BusinessIdComponent>();
+            _purchasedPool = _world.GetPool<PurchasedComponent>();
+            _upgradeModifierIdPool = _world.GetPool<UpgradeModifierIdComponent>();
+            _ownerIdPool = _world.GetPool<OwnerIdComponent>();
+            _idPool = _world.GetPool<IdComponent>();
+            _upgradeModifierPool = _world.GetPool<UpgradeModifierComponent>();
             _upgradeRequestPool = _world.GetPool<UpgradePurchasedRequestComponent>();
             _updateBusinessModifiersPool = _world.GetPool<UpdateBusinessModifiersComponent>();
         }

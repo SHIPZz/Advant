@@ -1,7 +1,9 @@
 using System.Collections.Generic;
+using System.Linq;
 using Code.Common.Components;
 using Code.Gameplay.Business.Components;
 using Code.Gameplay.Business.Configs;
+using Code.Gameplay.Business.Utils;
 using Code.Utils;
 using Leopotam.EcsLite;
 using UnityEngine;
@@ -18,11 +20,12 @@ namespace Code.Gameplay.Business.Systems
         private EcsPool<IncomeComponent> _incomePool;
         private EcsPool<LevelComponent> _levelPool;
         private EcsPool<LevelUpPriceComponent> _levelUpPricePool;
-        private EcsPool<UpdateBusinessModifiersComponent> _updateBusinessModifiersPool;
+        private EcsPool<AccumulatedModifierComponent> _accumulatedModifiersPool;
         private EcsPool<BaseIncomeComponent> _baseIncomePool;
         private EcsPool<BaseCostComponent> _baseCostPool;
         private EcsPool<BusinessIdComponent> _businessIdPool;
         private EcsPool<NameComponent> _namePool;
+        private EcsPool<IdComponent> _idPool;
 
         public RecalculateBusinessValuesSystem(BusinessService businessService)
         {
@@ -50,12 +53,12 @@ namespace Code.Gameplay.Business.Systems
             var level = _levelPool.Get(business).Value;
             var baseIncome = _baseIncomePool.Get(business).Value;
             var baseCost = _baseCostPool.Get(business).Value;
-            var upgradeDatas = _updateBusinessModifiersPool.Get(business).Value;
+            var modifiers = _accumulatedModifiersPool.Get(business).Value;
 
-            var (firstModifier, secondModifier) = GetIncomeModifiers(upgradeDatas);
-            
             ref var income = ref _incomePool.Get(business).Value;
             ref var levelUpPrice = ref _levelUpPricePool.Get(business).Value;
+
+            var (firstModifier, secondModifier) = BusinessModifierUtils.GetModifiers(modifiers);
 
             income = Mathf.RoundToInt(BusinessCalculator.CalculateIncome(level, baseIncome, firstModifier, secondModifier));
             levelUpPrice = BusinessCalculator.CalculateLevelUpPrice(level, baseCost);
@@ -68,16 +71,9 @@ namespace Code.Gameplay.Business.Systems
             var income = _incomePool.Get(business).Value;
             var levelUpPrice = _levelUpPricePool.Get(business).Value;
             var name = _namePool.Get(business).Value;
+            var accumulatedModifiersDatas = _accumulatedModifiersPool.Get(business).Value;
 
-            _businessService.NotifyBusinessDataUpdated(businessId, level, income, levelUpPrice, name);
-        }
-
-        private (float firstModifier, float secondModifier) GetIncomeModifiers(List<UpgradeData> modifiers)
-        {
-            float firstModifier = modifiers[0].Purchased ? modifiers[0].IncomeMultiplier : 0f;
-            float secondModifier = modifiers[1].Purchased ? modifiers[1].IncomeMultiplier : 0f;
-            
-            return (firstModifier, secondModifier);
+            _businessService.NotifyBusinessDataUpdated(businessId, level, income, levelUpPrice, name,accumulatedModifiersDatas);
         }
 
         private void InitializeFilters()
@@ -87,7 +83,7 @@ namespace Code.Gameplay.Business.Systems
                 .Inc<LevelComponent>()
                 .Inc<BaseIncomeComponent>()
                 .Inc<BaseCostComponent>()
-                .Inc<UpdateBusinessModifiersComponent>()
+                .Inc<AccumulatedModifierComponent>()
                 .Inc<LevelUpPriceComponent>()
                 .Inc<BusinessIdComponent>()
                 .Inc<NameComponent>()
@@ -98,12 +94,13 @@ namespace Code.Gameplay.Business.Systems
         {
             _incomePool = _world.GetPool<IncomeComponent>();
             _levelPool = _world.GetPool<LevelComponent>();
+            _idPool = _world.GetPool<IdComponent>();
             _levelUpPricePool = _world.GetPool<LevelUpPriceComponent>();
-            _updateBusinessModifiersPool = _world.GetPool<UpdateBusinessModifiersComponent>();
+            _accumulatedModifiersPool = _world.GetPool<AccumulatedModifierComponent>();
             _baseIncomePool = _world.GetPool<BaseIncomeComponent>();
             _baseCostPool = _world.GetPool<BaseCostComponent>();
             _businessIdPool = _world.GetPool<BusinessIdComponent>();
             _namePool = _world.GetPool<NameComponent>();
         }
     }
-} 
+}

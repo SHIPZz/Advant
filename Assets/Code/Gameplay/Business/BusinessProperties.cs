@@ -1,5 +1,7 @@
 using System.Collections.Generic;
+using Code.Gameplay.Business.Configs;
 using UniRx;
+using UnityEngine;
 
 namespace Code.Gameplay.Business
 {
@@ -11,75 +13,112 @@ namespace Code.Gameplay.Business
         private readonly Dictionary<int, ReactiveProperty<int>> _incomeProperties = new();
         private readonly Dictionary<int, ReactiveProperty<int>> _levelUpPriceProperties = new();
         private readonly Dictionary<int, ReactiveProperty<bool>> _purchasedProperties = new();
-        private readonly Dictionary<int, Dictionary<int, ReactiveProperty<bool>>> _upgradeProperties = new();
+        private readonly ReactiveProperty<(int, int, bool)> _businessModifierStateChanged = new();
+        
+        public IReadOnlyReactiveProperty<(int, int, bool)> BusinessModifierStateChanged => _businessModifierStateChanged;
 
-        public ReactiveProperty<int> GetLevelProperty(int id) => GetOrCreateProperty(_levelProperties, id);
-        public ReactiveProperty<string> GetNameProperty(int id) => GetOrCreateProperty(_nameProperties, id);
-        public ReactiveProperty<float> GetProgressProperty(int id) => GetOrCreateProperty(_progressProperties, id);
-        public ReactiveProperty<int> GetIncomeProperty(int id) => GetOrCreateProperty(_incomeProperties, id);
+        public IReadOnlyReactiveProperty<int> GetLevelProperty(int id)
+        {
+            if (!_levelProperties.ContainsKey(id))
+                _levelProperties[id] = new ReactiveProperty<int>();
+            
+            return _levelProperties[id];
+        }
 
-        public ReactiveProperty<int> GetLevelUpPriceProperty(int id) =>
-            GetOrCreateProperty(_levelUpPriceProperties, id);
+        public IReadOnlyReactiveProperty<string> GetNameProperty(int id)
+        {
+            if (!_nameProperties.ContainsKey(id))
+                _nameProperties[id] = new ReactiveProperty<string>();
+            
+            return _nameProperties[id];
+        }
 
-        public ReactiveProperty<bool> GetPurchasedProperty(int id) => GetOrCreateProperty(_purchasedProperties, id);
+        public IReadOnlyReactiveProperty<float> GetProgressProperty(int id)
+        {
+            if (!_progressProperties.ContainsKey(id))
+                _progressProperties[id] = new ReactiveProperty<float>();
+            
+            return _progressProperties[id];
+        }
 
-        public ReactiveProperty<bool> GetUpgradeProperty(int businessId, int upgradeId) =>
-            GetOrCreateUpgradeProperty(businessId, upgradeId);
+        public IReadOnlyReactiveProperty<int> GetIncomeProperty(int id)
+        {
+            if (!_incomeProperties.ContainsKey(id))
+                _incomeProperties[id] = new ReactiveProperty<int>();
+            
+            return _incomeProperties[id];
+        }
+
+        public IReadOnlyReactiveProperty<int> GetLevelUpPriceProperty(int id)
+        {
+            if (!_levelUpPriceProperties.ContainsKey(id))
+                _levelUpPriceProperties[id] = new ReactiveProperty<int>();
+            
+            return _levelUpPriceProperties[id];
+        }
+
+        public IReadOnlyReactiveProperty<bool> GetPurchasedProperty(int id)
+        {
+            if (!_purchasedProperties.ContainsKey(id))
+                _purchasedProperties[id] = new ReactiveProperty<bool>();
+            
+            return _purchasedProperties[id];
+        }
 
         public void UpdateBusinessData(int id, int level, int income, int levelUpPrice, string name,
-            Dictionary<int, bool> upgrades = null)
+            List<AccumulatedModifiersData> upgrades = null)
         {
             if (level > -1)
-                GetOrCreateProperty(_levelProperties, id).Value = level;
+            {
+                if (!_levelProperties.ContainsKey(id))
+                    _levelProperties[id] = new ReactiveProperty<int>();
+                
+                _levelProperties[id].Value = level;
+            }
 
             if (income > -1)
-                GetOrCreateProperty(_incomeProperties, id).Value = income;
+            {
+                if (!_incomeProperties.ContainsKey(id))
+                    _incomeProperties[id] = new ReactiveProperty<int>();
+                
+                _incomeProperties[id].Value = income;
+            }
 
             if (levelUpPrice > -1)
-                GetOrCreateProperty(_levelUpPriceProperties, id).Value = levelUpPrice;
+            {
+                if (!_levelUpPriceProperties.ContainsKey(id))
+                    _levelUpPriceProperties[id] = new ReactiveProperty<int>();
+                
+                _levelUpPriceProperties[id].Value = levelUpPrice;
+            }
 
             if (!string.IsNullOrEmpty(name))
-                GetOrCreateProperty(_nameProperties, id).Value = name;
+            {
+                if (!_nameProperties.ContainsKey(id))
+                    _nameProperties[id] = new ReactiveProperty<string>();
+                
+                _nameProperties[id].Value = name;
+            }
 
             if (upgrades != null)
             {
                 foreach (var upgrade in upgrades)
                 {
-                    GetOrCreateUpgradeProperty(id, upgrade.Key).Value = upgrade.Value;
+                    _businessModifierStateChanged.Value = (id, upgrade.Id, upgrade.Purchased);
                 }
             }
+
+            if (!_purchasedProperties.ContainsKey(id))
+                _purchasedProperties[id] = new ReactiveProperty<bool>();
             
-            GetPurchasedProperty(id).Value = level > 0;
+            _purchasedProperties[id].Value = level > 0;
         }
 
         public void UpdateProgress(int id, float progress)
         {
-            GetOrCreateProperty(_progressProperties, id).Value = progress;
-        }
-
-        private ReactiveProperty<T> GetOrCreateProperty<T>(Dictionary<int, ReactiveProperty<T>> properties, int id)
-        {
-            if (!properties.ContainsKey(id))
-            {
-                properties[id] = new ReactiveProperty<T>();
-            }
-
-            return properties[id];
-        }
-
-        private ReactiveProperty<bool> GetOrCreateUpgradeProperty(int businessId, int upgradeId)
-        {
-            if (!_upgradeProperties.ContainsKey(businessId))
-            {
-                _upgradeProperties[businessId] = new Dictionary<int, ReactiveProperty<bool>>();
-            }
-
-            if (!_upgradeProperties[businessId].ContainsKey(upgradeId))
-            {
-                _upgradeProperties[businessId][upgradeId] = new ReactiveProperty<bool>();
-            }
-
-            return _upgradeProperties[businessId][upgradeId];
+            if (!_progressProperties.ContainsKey(id))
+                _progressProperties[id] = new ReactiveProperty<float>();
+            _progressProperties[id].Value = progress;
         }
     }
 }

@@ -31,6 +31,7 @@ namespace Code.Gameplay.Business.Factory
         private readonly EcsPool<ProgressComponent> _progressPool;
         private readonly EcsPool<UpdateBusinessModifiersComponent> _modifiersPool;
         private readonly EcsPool<TotalIncomeComponent> _totalIncomePool;
+        private readonly EcsPool<AccumulatedModifierComponent> _accumulatedModifiersPool;
 
         public BusinessFactory(EcsWorld world, IIdentifierService identifierService)
         {
@@ -55,6 +56,7 @@ namespace Code.Gameplay.Business.Factory
             _purchasedPool = world.GetPool<PurchasedComponent>();
             _progressPool = world.GetPool<ProgressComponent>();
             _modifiersPool = world.GetPool<UpdateBusinessModifiersComponent>();
+            _accumulatedModifiersPool = world.GetPool<AccumulatedModifierComponent>();
         }
 
         public int CreateBusiness(BusinessData businessData, BusinessUpgradeNameData businessNameData,
@@ -67,6 +69,7 @@ namespace Code.Gameplay.Business.Factory
             AddLevelComponents(entity, businessData, businessIndex);
             AddProgressComponents(entity);
             AddUpgradeModifiers(entity, businessData);
+            AddAccumulatedModifiers(entity);
 
             return entity;
         }
@@ -141,6 +144,12 @@ namespace Code.Gameplay.Business.Factory
         {
             ref var modifiers = ref _modifiersPool.Add(entity);
             modifiers.Value = new List<UpgradeData>(businessData.Upgrades.ToList());
+        }
+
+        private void AddAccumulatedModifiers(int entity)
+        {
+            ref var accumulatedModifiers = ref _accumulatedModifiersPool.Add(entity);
+            accumulatedModifiers.Value = new List<AccumulatedModifiersData>(2); 
         }
     }
 }
