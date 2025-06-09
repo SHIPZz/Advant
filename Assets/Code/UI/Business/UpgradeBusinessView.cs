@@ -1,8 +1,8 @@
 ﻿using Code.Extensions;
 using TMPro;
+using UniRx;
 using UnityEngine;
 using UnityEngine.UI;
-using UniRx;
 
 namespace Code.UI.Business
 {

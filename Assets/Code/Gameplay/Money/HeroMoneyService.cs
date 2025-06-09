@@ -1,5 +1,5 @@
 ﻿using Code.Gameplay.Money.Components;
-using Code.Gameplay.Requests;
+using Code.Gameplay.Money.Requests;
 using Leopotam.EcsLite;
 
 namespace Code.Gameplay.Money

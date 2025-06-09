@@ -1,4 +1,4 @@
-﻿namespace Code.Gameplay.Requests
+﻿namespace Code.Gameplay.Money.Requests
 {
     public readonly struct MoneyUpdateRequest
     {

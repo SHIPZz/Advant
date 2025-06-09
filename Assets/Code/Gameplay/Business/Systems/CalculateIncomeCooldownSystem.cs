@@ -2,7 +2,6 @@
 using Code.Common.Services;
 using Code.Gameplay.Business.Components;
 using Leopotam.EcsLite;
-using UnityEngine;
 
 namespace Code.Gameplay.Business.Systems
 {

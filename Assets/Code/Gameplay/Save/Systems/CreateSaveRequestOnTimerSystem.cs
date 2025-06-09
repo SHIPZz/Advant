@@ -1,7 +1,6 @@
 using Code.Common.Services;
 using Code.Gameplay.Save.Components;
 using Leopotam.EcsLite;
-using UnityEngine;
 
 namespace Code.Gameplay.Save.Systems
 {

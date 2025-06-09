@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Code.Gameplay.Save.Models;
 
 namespace Code.Gameplay.Save.Models
 {

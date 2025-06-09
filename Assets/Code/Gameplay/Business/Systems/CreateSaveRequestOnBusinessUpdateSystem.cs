@@ -7,21 +7,28 @@ namespace Code.Gameplay.Business.Systems
     public class CreateSaveRequestOnBusinessUpdateSystem : IEcsInitSystem, IEcsRunSystem
     {
         private EcsWorld _world;
-        private EcsFilter _updateBusinessRequests;
+        private EcsFilter _updateLevelBusinessRequests;
+        private EcsFilter _updateBusinessUpgradesRequests;
 
         public void Init(IEcsSystems systems)
         {
             _world = systems.GetWorld();
 
-           _updateBusinessRequests = _world
-               .Filter<UpdateBusinessRequestComponent>()
+           _updateLevelBusinessRequests = _world
+               .Filter<LevelUpRequestComponent>()
+               .End();
+           
+           _updateBusinessUpgradesRequests = _world
+               .Filter<UpgradePurchasedRequestComponent>()
                .End();
         }
 
         public void Run(IEcsSystems systems)
         {
-            foreach (var updateBusinessRequest in _updateBusinessRequests) 
+            if(_updateBusinessUpgradesRequests.GetEntitiesCount() > 0 || _updateLevelBusinessRequests.GetEntitiesCount() > 0)
+            {
                 SendSaveRequest();
+            }
         }
 
         private void SendSaveRequest()

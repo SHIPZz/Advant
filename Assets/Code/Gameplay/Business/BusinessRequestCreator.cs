@@ -1,7 +1,6 @@
 using Code.Gameplay.Business.Components;
-using Code.Gameplay.Business.Configs;
+using Code.Gameplay.Business.Requests;
 using Code.Gameplay.Money;
-using Code.Gameplay.Requests;
 using Leopotam.EcsLite;
 
 namespace Code.Gameplay.Business
@@ -10,7 +9,8 @@ namespace Code.Gameplay.Business
     {
         private readonly EcsWorld _ecsWorld;
         private readonly IMoneyService _moneyService;
-        private EcsPool<UpdateBusinessRequestComponent> _updateRequestPool;
+        private EcsPool<LevelUpRequestComponent> _levelUpRequestPool;
+        private EcsPool<UpgradePurchasedRequestComponent> _upgradeRequestPool;
 
         public BusinessRequestCreator(EcsWorld ecsWorld, IMoneyService moneyService)
         {
@@ -20,15 +20,16 @@ namespace Code.Gameplay.Business
 
         public void Initialize()
         {
-            _updateRequestPool = _ecsWorld.GetPool<UpdateBusinessRequestComponent>();
+            _levelUpRequestPool = _ecsWorld.GetPool<LevelUpRequestComponent>();
+            _upgradeRequestPool = _ecsWorld.GetPool<UpgradePurchasedRequestComponent>();
         }
 
-        public bool TryPurchaseLevelUp(int id, int levelPrice, int level)
+        public bool TryPurchaseLevelUp(int businessId, int levelPrice, int level)
         {
             if(!_moneyService.TryPurchase(levelPrice))
                 return false;
             
-            CreateUpdateRequest(level, levelPrice, -1, id, new UpdateModifierData(-1));
+            CreateLevelUpRequest(businessId, level);
             return true;
         }
 
@@ -37,14 +38,20 @@ namespace Code.Gameplay.Business
             if (!_moneyService.TryPurchase(price))
                 return false;
 
-            CreateUpdateRequest(-1, -1, -1, businessId, new UpdateModifierData(upgradeId));
+            CreateUpgradeRequest(businessId, upgradeId);
             return true;
         }
 
-        private void CreateUpdateRequest(int level, int levelPrice, int income, int businessId, UpdateModifierData modifierData)
+        private void CreateLevelUpRequest(int businessId, int level)
         {
-            int updateRequest = _ecsWorld.NewEntity();
-            _updateRequestPool.Add(updateRequest).Value = new UpdateBusinessRequest(level, levelPrice, income, businessId, modifierData);
+            int request = _ecsWorld.NewEntity();
+            _levelUpRequestPool.Add(request).Value = new LevelUpRequest(businessId, level);
+        }
+
+        private void CreateUpgradeRequest(int businessId, int upgradeId)
+        {
+            int request = _ecsWorld.NewEntity();
+            _upgradeRequestPool.Add(request).Value = new UpgradePurchasedRequest(businessId, upgradeId);
         }
     }
 } 

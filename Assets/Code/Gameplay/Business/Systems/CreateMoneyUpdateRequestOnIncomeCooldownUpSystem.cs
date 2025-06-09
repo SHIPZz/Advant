@@ -1,12 +1,8 @@
-﻿using System.Collections.Generic;
-using Code.Common.Components;
+﻿using Code.Common.Components;
 using Code.Gameplay.Business.Components;
-using Code.Gameplay.Business.Configs;
 using Code.Gameplay.Money.Components;
-using Code.Gameplay.Requests;
-using Code.Utils;
+using Code.Gameplay.Money.Requests;
 using Leopotam.EcsLite;
-using UnityEngine;
 
 namespace Code.Gameplay.Business.Systems
 {
@@ -18,9 +14,7 @@ namespace Code.Gameplay.Business.Systems
         private EcsPool<IncomeСooldownUpComponent> _cooldownUpPool;
         private EcsPool<MoneyUpdateRequestComponent> _moneyUpdateRequestPool;
         private EcsPool<OwnerIdComponent> _ownerIdPool;
-        private EcsPool<LevelComponent> _levelPool;
-        private EcsPool<UpdateBusinessModifiersComponent> _updateBusinessModifiersPool;
-        private EcsPool<BaseIncomeComponent> _baseIncomePool;
+        private EcsPool<TotalIncomeComponent> _totalIncomePool;
         
         public void Init(IEcsSystems systems)
         {
@@ -48,32 +42,9 @@ namespace Code.Gameplay.Business.Systems
         private void CreateMoneyUpdateRequest(int business)
         {
             var ownerId = _ownerIdPool.Get(business).Value;
-            var totalIncome = CalculateTotalIncome(business);
+            var totalIncome = _totalIncomePool.Get(business).Value;
             
             CreateNewMoneyUpdateRequest(ownerId, totalIncome);
-        }
-
-        private int CalculateTotalIncome(int business)
-        {
-            var level = _levelPool.Get(business).Value;
-            var baseIncome = _baseIncomePool.Get(business).Value;
-            var modifiers = _updateBusinessModifiersPool.Get(business).Value;
-
-            var (firstModifier, secondModifier) = GetIncomeModifiers(modifiers);
-            
-            return Mathf.RoundToInt(BusinessCalculator.CalculateIncome(
-                level,
-                baseIncome,
-                firstModifier,
-                secondModifier));
-        }
-
-        private (float firstModifier, float secondModifier) GetIncomeModifiers(List<UpgradeData> modifiers)
-        {
-            float firstModifier = modifiers[0].Purchased ? modifiers[0].IncomeMultiplier : 0f;
-            float secondModifier = modifiers[1].Purchased ? modifiers[1].IncomeMultiplier : 0f;
-            
-            return (firstModifier, secondModifier);
         }
 
         private void CreateNewMoneyUpdateRequest(int ownerId, int totalIncome)
@@ -90,8 +61,7 @@ namespace Code.Gameplay.Business.Systems
                 .Inc<IncomeСooldownUpComponent>()
                 .Inc<PurchasedComponent>()
                 .Inc<BusinessComponent>()
-                .Inc<BaseIncomeComponent>()
-                .Inc<UpdateBusinessModifiersComponent>()
+                .Inc<TotalIncomeComponent>()
                 .Inc<OwnerIdComponent>()
                 .Inc<IdComponent>()
                 .End();
@@ -100,11 +70,9 @@ namespace Code.Gameplay.Business.Systems
         private void InitializePools()
         {
             _cooldownUpPool = _world.GetPool<IncomeСooldownUpComponent>();
-            _updateBusinessModifiersPool = _world.GetPool<UpdateBusinessModifiersComponent>();
-            _levelPool = _world.GetPool<LevelComponent>();
-            _baseIncomePool = _world.GetPool<BaseIncomeComponent>();
             _ownerIdPool = _world.GetPool<OwnerIdComponent>();
             _moneyUpdateRequestPool = _world.GetPool<MoneyUpdateRequestComponent>();
+            _totalIncomePool = _world.GetPool<TotalIncomeComponent>();
         }
     }
 }

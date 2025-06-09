@@ -1,6 +1,5 @@
 using Code.Common.Features;
 using Code.Common.Services;
-using Code.Gameplay.Business;
 using Code.Gameplay.Business.Configs;
 using Code.Gameplay.Business.Systems;
 using Code.Gameplay.Save;
@@ -40,8 +39,11 @@ namespace Code.Gameplay.Business.Features
             Systems
                 .Add(new BusinessInitSystem(_businessUpgradeNamesConfig, _identifierService, _businessConfig, _businessService, _saveService))
                 .Add(new CalculateIncomeCooldownSystem(_timeService))
+                .Add(new CalculateTotalIncomeOnCooldownUpSystem())
                 .Add(new CalculateBusinessProgressSystem(_businessService))
-                .Add(new UpdateBusinessOnRequestSystem(_businessService))
+                .Add(new UpdateBusinessOnLevelUpSystem())
+                .Add(new UpdateBusinessOnUpgradePurchasedSystem())
+                .Add(new RecalculateBusinessValuesSystem(_businessService))
                 .Add(new CreateSaveRequestOnBusinessUpdateSystem())
                 .Add(new CleanupBusinessRequestsSystem());
         }

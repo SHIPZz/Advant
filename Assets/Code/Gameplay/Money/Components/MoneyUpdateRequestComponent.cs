@@ -1,4 +1,4 @@
-using Code.Gameplay.Requests;
+using Code.Gameplay.Money.Requests;
 
 namespace Code.Gameplay.Money.Components
 {

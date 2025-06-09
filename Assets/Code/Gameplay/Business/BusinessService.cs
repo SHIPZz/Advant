@@ -1,8 +1,8 @@
+using System.Collections.Generic;
 using Code.Common;
 using Code.Gameplay.Money;
 using Leopotam.EcsLite;
 using UniRx;
-using System.Collections.Generic;
 
 namespace Code.Gameplay.Business
 {

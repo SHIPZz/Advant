@@ -30,6 +30,7 @@ namespace Code.Gameplay.Business.Factory
         private readonly EcsPool<PurchasedComponent> _purchasedPool;
         private readonly EcsPool<ProgressComponent> _progressPool;
         private readonly EcsPool<UpdateBusinessModifiersComponent> _modifiersPool;
+        private readonly EcsPool<TotalIncomeComponent> _totalIncomePool;
 
         public BusinessFactory(EcsWorld world, IIdentifierService identifierService)
         {
@@ -46,6 +47,7 @@ namespace Code.Gameplay.Business.Factory
             _incomeCooldownPool = world.GetPool<IncomeСooldownComponent>();
             _incomeCooldownLeftPool = world.GetPool<IncomeСooldownLeftComponent>();
             _incomeCooldownUpPool = world.GetPool<IncomeСooldownUpComponent>();
+            _totalIncomePool = world.GetPool<TotalIncomeComponent>();
             _incomeCooldownAvailablePool = world.GetPool<IncomeСooldownAvailableComponent>();
             _levelPool = world.GetPool<LevelComponent>();
             _baseCostPool = world.GetPool<BaseCostComponent>();
@@ -94,6 +96,9 @@ namespace Code.Gameplay.Business.Factory
 
             ref var baseIncome = ref _baseIncomePool.Add(entity);
             baseIncome.Value = businessData.BaseIncome;
+            
+            ref var totalIncome = ref _totalIncomePool.Add(entity);
+            totalIncome.Value = 0;
 
             ref var incomeСooldown = ref _incomeCooldownPool.Add(entity);
             incomeСooldown.Value = businessData.IncomeDelay;

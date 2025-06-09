@@ -1,7 +1,6 @@
 using Code.Common.Features;
 using Code.Gameplay.Business.Systems;
 using Code.Gameplay.Hero.Systems;
-using Code.Gameplay.Money;
 using Code.Gameplay.Money.Systems;
 using Leopotam.EcsLite;
 
